@@ -1,19 +1,18 @@
-package io.fiscalizai.model;
+package io.fiscalizai.model.entity;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
-import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToOne;
+import jakarta.persistence.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
-import java.time.LocalDate;
+import java.time.Instant;
 
 @Entity
 public class Issue extends PanacheEntity {
 
-    private LocalDate occurrenceDate = LocalDate.now();
-
+    @Column(length = 1000)
     public String description;
+
     public Severity severity;
     public Status status;
     public Integer confirmIssue;
@@ -26,12 +25,18 @@ public class Issue extends PanacheEntity {
     @JoinColumn(name = "photo_id")
     public Image photo;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "reporter_id")
-    public User reporter;
+    public FiscalizaiUser reporter;
 
     @ManyToOne
     @JoinColumn(name = "address_id")
     public Address address;
 
+    @CreationTimestamp
+    @Column(updatable = false)
+    private Instant createdAt;
+
+    @UpdateTimestamp
+    private Instant updatedAt;
 }
