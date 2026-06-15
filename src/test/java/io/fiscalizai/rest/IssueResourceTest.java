@@ -267,6 +267,19 @@ class IssueResourceTest {
                 .body("[0].reporter.id", equalTo(userId.intValue()));
     }
 
+    @Test
+    @Order(13)
+    void testConfirmIssue() {
+        Long issueId = createTestIssueViaAPI();
+        given()
+                .contentType(ContentType.JSON)
+                .when()
+                .put("/issues/confirm/" + issueId)
+                .then()
+                .statusCode(200)
+                .body("confirmIssue", equalTo(1));
+    }
+
     Long createTestIssueViaAPI() {
         String issueJson = String.format("""
             {

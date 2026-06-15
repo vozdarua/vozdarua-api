@@ -25,6 +25,21 @@ public class IssueResource {
         return Issue.listAll();
     }
 
+    @PUT
+    @Transactional
+    @Path("confirm/{id}")
+    public Response confirmIssue(@PathParam("id") Long id) {
+        Issue issue = Issue.findByIdWithCategoryAndTags(id);
+        if(Objects.isNull(issue)) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+
+        issue.confirmIssue = issue.confirmIssue + 1;
+        issue.persist();
+
+        return Response.ok(issue).build();
+    }
+
     @GET
     @Path("/{id}")
     public Response getById(@PathParam("id") Long id) {
