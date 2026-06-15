@@ -11,6 +11,7 @@ import java.time.Instant;
 @Entity
 public class FiscalizaiUser extends PanacheEntity {
 
+    @Column(unique = true)
     public String phone;
     public String password;
 

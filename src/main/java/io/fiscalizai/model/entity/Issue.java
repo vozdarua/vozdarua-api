@@ -21,7 +21,7 @@ public class Issue extends PanacheEntity {
     @JoinColumn(name = "category_id")
     public Category category;
 
-    @OneToOne
+    @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "photo_id")
     public Image photo;
 
@@ -29,7 +29,7 @@ public class Issue extends PanacheEntity {
     @JoinColumn(name = "reporter_id")
     public FiscalizaiUser reporter;
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "address_id")
     public Address address;
 

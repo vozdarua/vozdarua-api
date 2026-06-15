@@ -1,8 +1,11 @@
 package io.fiscalizai.rest;
 
+import io.fiscalizai.model.dto.ErrorResource;
+import io.fiscalizai.model.entity.FiscalizaiUser;
 import io.fiscalizai.model.entity.Issue;
 import io.fiscalizai.model.entity.Severity;
 import io.fiscalizai.model.entity.Status;
+import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
@@ -10,6 +13,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
 import java.util.List;
+import java.util.Objects;
 
 @Path("/issues")
 @Produces(MediaType.APPLICATION_JSON)
@@ -34,6 +38,18 @@ public class IssueResource {
     @POST
     @Transactional
     public Response create(@Valid Issue issue) {
+
+        if(Objects.isNull(issue.reporter.id)) {
+            return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResource("Necessário informar um usuário!")).build();
+        }
+
+        FiscalizaiUser reporter = FiscalizaiUser.findById(issue.reporter.id);
+
+        if(Objects.isNull(reporter)) {
+            return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResource("Usuário não encontrado")).build();
+        }
+
+        issue.reporter = reporter;
         issue.persist();
         return Response.status(Response.Status.CREATED).entity(issue).build();
     }

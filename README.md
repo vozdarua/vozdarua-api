@@ -1,79 +1,211 @@
-# fiscalizai-api
+# FiscalizAI API
 
-This project uses Quarkus, the Supersonic Subatomic Java Framework.
+A REST API for managing civic issues and community reports, built with Quarkus.
 
-If you want to learn more about Quarkus, please visit its website: <https://quarkus.io/>.
+## Overview
 
-## Running the application in dev mode
+FiscalizAI is a citizen reporting platform that allows users to report and track public infrastructure issues in their communities. The API provides endpoints for managing issues, users, categories, and locations.
 
-You can run your application in dev mode that enables live coding using:
+## Tech Stack
 
-```shell script
+- **Framework**: Quarkus 3.36.1
+- **Language**: Java 25
+- **Database**: PostgreSQL
+- **ORM**: Hibernate with Panache
+- **API**: Jakarta REST (JAX-RS)
+- **Serialization**: Jackson
+- **Validation**: Hibernate Validator
+- **API Documentation**: SmallRye OpenAPI
+
+## Core Features
+
+### Issue Management
+- Create, read, update, and delete issues
+- Filter issues by category, status, severity, or reporter
+- Track issue confirmation count
+- Attach photos to issues
+- Associate issues with geographic addresses
+
+### User Management
+- Phone-based user authentication
+- User registration and management
+
+### Location Services
+- Address management with CEP (Brazilian postal code) integration
+- Integration with Brazil API for address lookup
+
+### Categories
+- Categorize issues (infrastructure, environment, safety, etc.)
+
+## Domain Model
+
+### Entities
+
+- **Issue**: Core entity representing a civic report
+  - Description, severity, status
+  - Category, reporter, address
+  - Photo attachment
+  - Confirmation counter
+  - Timestamps (created/updated)
+
+- **FiscalizaiUser**: Platform users
+  - Phone number (unique identifier)
+  - Password
+  - Timestamps
+
+- **Category**: Issue classification
+
+- **Address**: Geographic location information
+
+- **Image**: Photo attachments for issues
+
+### Enums
+
+- **Severity**: Issue severity levels
+- **Status**: Issue lifecycle states
+
+## Getting Started
+
+### Prerequisites
+
+- Java 25 or later
+- Maven 3.x
+- PostgreSQL database
+
+### Database Configuration
+
+Configure your PostgreSQL connection in `src/main/resources/application.properties`:
+
+```properties
+quarkus.datasource.db-kind=postgresql
+quarkus.datasource.username=postgres
+quarkus.datasource.password=secret
+quarkus.datasource.jdbc.url=jdbc:postgresql://127.0.0.1:5432/fiscalizai_db
+```
+
+### Running in Development Mode
+
+Start the application with live reload enabled:
+
+```bash
 ./mvnw quarkus:dev
 ```
 
-> **_NOTE:_**  Quarkus now ships with a Dev UI, which is available in dev mode only at <http://localhost:8080/q/dev/>.
+The API will be available at `http://localhost:8080`
 
-## Packaging and running the application
+**Quick Links:**
+- **Swagger UI**: `http://localhost:8080/q/swagger-ui/` - Interactive API documentation and testing
+- **Dev UI**: `http://localhost:8080/q/dev/` - Quarkus development console
+- **OpenAPI Spec**: `http://localhost:8080/q/openapi` - OpenAPI specification (JSON)
 
-The application can be packaged using:
+### API Documentation with Swagger
 
-```shell script
+The API comes with built-in Swagger UI for interactive documentation and testing. Once the application is running, navigate to:
+
+**`http://localhost:8080/q/swagger-ui/`**
+
+Swagger UI provides:
+- Complete API endpoint documentation
+- Request/response schemas
+- Interactive "Try it out" functionality to test endpoints
+- Model definitions for all entities and DTOs
+- Authentication testing capabilities
+
+## API Endpoints
+
+### Issues
+
+- `GET /issues` - List all issues
+- `GET /issues/{id}` - Get issue by ID
+- `POST /issues` - Create new issue
+- `PUT /issues/{id}` - Update issue
+- `DELETE /issues/{id}` - Delete issue
+- `GET /issues/category/{categoryId}` - List issues by category
+- `GET /issues/status/{status}` - List issues by status
+- `GET /issues/severity/{severity}` - List issues by severity
+- `GET /issues/reporter/{reporterId}` - List issues by reporter
+
+### Users
+
+- User management endpoints (see `FiscalizaiUserResource`)
+
+### Locations
+
+- Address and CEP lookup services (see `LocationResource`)
+
+## Building for Production
+
+### Standard JAR
+
+```bash
 ./mvnw package
 ```
 
-It produces the `quarkus-run.jar` file in the `target/quarkus-app/` directory.
-Be aware that it’s not an _über-jar_ as the dependencies are copied into the `target/quarkus-app/lib/` directory.
+Run with:
+```bash
+java -jar target/quarkus-app/quarkus-run.jar
+```
 
-The application is now runnable using `java -jar target/quarkus-app/quarkus-run.jar`.
+### Uber JAR
 
-If you want to build an _über-jar_, execute the following command:
-
-```shell script
+```bash
 ./mvnw package -Dquarkus.package.jar.type=uber-jar
 ```
 
-The application, packaged as an _über-jar_, is now runnable using `java -jar target/*-runner.jar`.
+Run with:
+```bash
+java -jar target/*-runner.jar
+```
 
-## Creating a native executable
+### Native Executable
 
-You can create a native executable using:
-
-```shell script
+With GraalVM installed:
+```bash
 ./mvnw package -Dnative
 ```
 
-Or, if you don't have GraalVM installed, you can run the native executable build in a container using:
-
-```shell script
+Or using container build:
+```bash
 ./mvnw package -Dnative -Dquarkus.native.container-build=true
 ```
 
-You can then execute your native executable with: `./target/fiscalizai-api-1.0.0-SNAPSHOT-runner`
+Run with:
+```bash
+./target/fiscalizai-api-1.0.0-SNAPSHOT-runner
+```
 
-If you want to learn more about building native executables, please consult <https://quarkus.io/guides/maven-tooling>.
+## Testing
 
-## Related Guides
+Run tests with:
+```bash
+./mvnw test
+```
 
-- REST ([guide](https://quarkus.io/guides/rest)): Build RESTful web services and APIs using Jakarta REST (formerly JAX-RS)
-- REST Jackson ([guide](https://quarkus.io/guides/rest#json-serialisation)): Jackson serialization support for Quarkus REST. This extension is not compatible with the quarkus-resteasy extension, or any of the extensions that depend on it
-- Hibernate ORM with Panache ([guide](https://quarkus.io/guides/hibernate-orm-panache)): Simplified JPA/Hibernate data access layer with active record and repository patterns
-- JDBC Driver - PostgreSQL ([guide](https://quarkus.io/guides/datasource)): Connect to the PostgreSQL database via JDBC
+## Project Structure
 
-## Provided Code
+```
+src/
+├── main/
+│   ├── java/io/fiscalizai/
+│   │   ├── controller/
+│   │   │   ├── converter/    # JPA converters
+│   │   │   └── restclient/   # External API clients
+│   │   ├── model/
+│   │   │   ├── dto/          # Data transfer objects
+│   │   │   └── entity/       # JPA entities
+│   │   └── rest/             # REST endpoints
+│   └── resources/
+│       ├── application.properties
+│       └── import.sql
+└── test/
+    └── java/io/fiscalizai/
+        └── rest/             # REST endpoint tests
+```
 
-### Hibernate ORM
+## Development
 
-Create your first JPA entity
+The project uses Hibernate Panache for simplified data access, providing active record pattern on entities. All entities extend `PanacheEntity` which provides auto-generated ID and common persistence methods.
 
-[Related guide section...](https://quarkus.io/guides/hibernate-orm)
+## License
 
-
-[Related Hibernate with Panache section...](https://quarkus.io/guides/hibernate-orm-panache)
-
-
-### REST
-
-Easily start your REST Web Services
-
-[Related guide section...](https://quarkus.io/guides/getting-started-reactive#reactive-jax-rs-resources)
+This project is licensed under the terms specified in the project license file.
