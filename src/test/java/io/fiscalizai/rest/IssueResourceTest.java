@@ -20,7 +20,6 @@ class IssueResourceTest {
     private Long createdIssueId;
     private Long categoryId;
     private Long userId;
-    private Long addressId;
 
     @BeforeEach
     @Transactional
@@ -44,15 +43,6 @@ class IssueResourceTest {
         user.password = "test123";
         user.persist();
         userId = user.id;
-
-        // Create test address
-        Address address = new Address();
-        address.latitude = -23.5505;
-        address.longitude = -46.6333;
-        address.location = "São Paulo, SP";
-        address.persist();
-        addressId = address.id;
-
     }
 
     @Test
@@ -66,9 +56,13 @@ class IssueResourceTest {
                 "confirmIssue": 0,
                 "category": {"id": %d},
                 "reporter": {"id": %d},
-                "address": {"id": %d}
+                "address": {
+                     "latitude": -23.5505,
+                     "longitude": -46.6333,
+                     "location": "São Paulo, SP"
+                }
             }
-            """, categoryId, userId, addressId);
+            """, categoryId, userId);
 
         Integer id = given()
                 .contentType(ContentType.JSON)
@@ -140,9 +134,13 @@ class IssueResourceTest {
                 "confirmIssue": 5,
                 "category": {"id": %d},
                 "reporter": {"id": %d},
-                "address": {"id": %d}
+                "address": {
+                     "latitude": -23.5505,
+                     "longitude": -46.6333,
+                     "location": "São Paulo, SP"
+                }
             }
-            """, categoryId, userId, addressId);
+            """, categoryId, userId);
 
         given()
                 .contentType(ContentType.JSON)
@@ -167,9 +165,13 @@ class IssueResourceTest {
                 "confirmIssue": 0,
                 "category": {"id": %d},
                 "reporter": {"id": %d},
-                "address": {"id": %d}
+                "address": {
+                     "latitude": -23.5505,
+                     "longitude": -46.6333,
+                     "location": "São Paulo, SP"
+                }
             }
-            """, categoryId, userId, addressId);
+            """, categoryId, userId);
 
         given()
                 .contentType(ContentType.JSON)
@@ -274,9 +276,13 @@ class IssueResourceTest {
                 "confirmIssue": 0,
                 "category": {"id": %d},
                 "reporter": {"id": %d},
-                "address": {"id": %d}
+                "address": {
+                     "latitude": -23.5505,
+                     "longitude": -46.6333,
+                     "location": "São Paulo, SP"
+                }
             }
-            """, categoryId, userId, addressId);
+            """, categoryId, userId);
 
         Integer id = given()
                 .contentType(ContentType.JSON)
