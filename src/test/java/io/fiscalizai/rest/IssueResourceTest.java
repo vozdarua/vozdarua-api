@@ -1,9 +1,6 @@
 package io.fiscalizai.rest;
 
-import io.fiscalizai.model.entity.Address;
-import io.fiscalizai.model.entity.Category;
-import io.fiscalizai.model.entity.FiscalizaiUser;
-import io.fiscalizai.model.entity.Issue;
+import io.fiscalizai.model.entity.*;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
 import jakarta.transaction.Transactional;
@@ -20,6 +17,10 @@ class IssueResourceTest {
     private Long createdIssueId;
     private Long categoryId;
     private Long userId;
+    private Long severityHighId;
+    private Long severityMediumId;
+    private Long statusOpenId;
+    private Long statusAnalyzingId;
 
     @BeforeEach
     @Transactional
@@ -29,6 +30,30 @@ class IssueResourceTest {
         Category.deleteAll();
         FiscalizaiUser.deleteAll();
         Address.deleteAll();
+        Severity.deleteAll();
+        Status.deleteAll();
+
+        // Create test severities
+        Severity severityHigh = new Severity();
+        severityHigh.name = "Alto";
+        severityHigh.persist();
+        severityHighId = severityHigh.id;
+
+        Severity severityMedium = new Severity();
+        severityMedium.name = "Médio";
+        severityMedium.persist();
+        severityMediumId = severityMedium.id;
+
+        // Create test statuses
+        Status statusOpen = new Status();
+        statusOpen.name = "Aberto";
+        statusOpen.persist();
+        statusOpenId = statusOpen.id;
+
+        Status statusAnalyzing = new Status();
+        statusAnalyzing.name = "Em análise";
+        statusAnalyzing.persist();
+        statusAnalyzingId = statusAnalyzing.id;
 
         // Create test category
         Category category = new Category();
@@ -51,8 +76,8 @@ class IssueResourceTest {
         String issueJson = String.format("""
             {
                 "description": "Buraco grande na rua",
-                "severity": "HIGH",
-                "status": "OPEN",
+                "severity": {"id": %d},
+                "status": {"id": %d},
                 "confirmIssue": 0,
                 "category": {"id": %d},
                 "reporter": {"id": %d},
@@ -62,7 +87,7 @@ class IssueResourceTest {
                      "location": "São Paulo, SP"
                 }
             }
-            """, categoryId, userId);
+            """, severityHighId, statusOpenId, categoryId, userId);
 
         Integer id = given()
                 .contentType(ContentType.JSON)
@@ -72,8 +97,8 @@ class IssueResourceTest {
                 .then()
                 .statusCode(201)
                 .body("description", equalTo("Buraco grande na rua"))
-                .body("severity", equalTo("HIGH"))
-                .body("status", equalTo("OPEN"))
+                .body("severity.name", equalTo("Alto"))
+                .body("status.name", equalTo("Aberto"))
                 .body("confirmIssue", equalTo(0))
                 .body("id", notNullValue())
                 .extract()
@@ -108,7 +133,7 @@ class IssueResourceTest {
                 .statusCode(200)
                 .body("id", equalTo(issueId.intValue()))
                 .body("description", equalTo("Buraco grande na rua"))
-                .body("severity", equalTo("HIGH"));
+                .body("severity.name", equalTo("Alto"));
     }
 
     @Test
@@ -129,8 +154,8 @@ class IssueResourceTest {
         String updatedJson = String.format("""
             {
                 "description": "Buraco muito grande na rua",
-                "severity": "HIGH",
-                "status": "ANALYZING",
+                "severity": {"id": %d},
+                "status": {"id": %d},
                 "confirmIssue": 5,
                 "category": {"id": %d},
                 "reporter": {"id": %d},
@@ -140,7 +165,7 @@ class IssueResourceTest {
                      "location": "São Paulo, SP"
                 }
             }
-            """, categoryId, userId);
+            """, severityHighId, statusAnalyzingId, categoryId, userId);
 
         given()
                 .contentType(ContentType.JSON)
@@ -150,7 +175,7 @@ class IssueResourceTest {
                 .then()
                 .statusCode(200)
                 .body("description", equalTo("Buraco muito grande na rua"))
-                .body("status", equalTo("ANALYZING"))
+                .body("status.name", equalTo("Em análise"))
                 .body("confirmIssue", equalTo(5));
     }
 
@@ -160,8 +185,8 @@ class IssueResourceTest {
         String updatedJson = String.format("""
             {
                 "description": "Updated description",
-                "severity": "MEDIUM",
-                "status": "OPEN",
+                "severity": {"id": %d},
+                "status": {"id": %d},
                 "confirmIssue": 0,
                 "category": {"id": %d},
                 "reporter": {"id": %d},
@@ -171,7 +196,7 @@ class IssueResourceTest {
                      "location": "São Paulo, SP"
                 }
             }
-            """, categoryId, userId);
+            """, severityMediumId, statusOpenId, categoryId, userId);
 
         given()
                 .contentType(ContentType.JSON)
@@ -232,11 +257,11 @@ class IssueResourceTest {
 
         given()
                 .when()
-                .get("/issues/status/OPEN")
+                .get("/issues/status/" + statusOpenId)
                 .then()
                 .statusCode(200)
                 .body("$", hasSize(1))
-                .body("[0].status", equalTo("OPEN"));
+                .body("[0].status.name", equalTo("Aberto"));
     }
 
     @Test
@@ -246,11 +271,11 @@ class IssueResourceTest {
 
         given()
                 .when()
-                .get("/issues/severity/HIGH")
+                .get("/issues/severity/" + severityHighId)
                 .then()
                 .statusCode(200)
                 .body("$", hasSize(1))
-                .body("[0].severity", equalTo("HIGH"));
+                .body("[0].severity.name", equalTo("Alto"));
     }
 
     @Test
@@ -284,8 +309,8 @@ class IssueResourceTest {
         String issueJson = String.format("""
             {
                 "description": "Buraco grande na rua",
-                "severity": "HIGH",
-                "status": "OPEN",
+                "severity": {"id": %d},
+                "status": {"id": %d},
                 "confirmIssue": 0,
                 "category": {"id": %d},
                 "reporter": {"id": %d},
@@ -295,7 +320,7 @@ class IssueResourceTest {
                      "location": "São Paulo, SP"
                 }
             }
-            """, categoryId, userId);
+            """, severityHighId, statusOpenId, categoryId, userId);
 
         Integer id = given()
                 .contentType(ContentType.JSON)

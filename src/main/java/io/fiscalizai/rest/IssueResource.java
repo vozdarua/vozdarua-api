@@ -1,11 +1,11 @@
 package io.fiscalizai.rest;
 
+import io.fiscalizai.config.RequestLocale;
 import io.fiscalizai.model.dto.ErrorResource;
-import io.fiscalizai.model.entity.FiscalizaiUser;
-import io.fiscalizai.model.entity.Issue;
-import io.fiscalizai.model.entity.Severity;
-import io.fiscalizai.model.entity.Status;
+import io.fiscalizai.model.entity.*;
+import io.fiscalizai.model.messages.AppMessages;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
+import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
@@ -20,9 +20,17 @@ import java.util.Objects;
 @Consumes(MediaType.APPLICATION_JSON)
 public class IssueResource {
 
+    @Inject
+    @RequestLocale
+    AppMessages appMessages;
+
     @GET
-    public List<Issue> listAll() {
-        return Issue.listAll();
+    public Response listAll() {
+        List<Issue> issues = Issue.listAll();
+        if(issues.isEmpty()) {
+            return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResource(appMessages.issue_not_found())).build();
+        }
+        return Response.ok(Issue.listAll()).build();
     }
 
     @PUT
@@ -31,7 +39,7 @@ public class IssueResource {
     public Response confirmIssue(@PathParam("id") Long id) {
         Issue issue = Issue.findByIdWithCategoryAndTags(id);
         if(Objects.isNull(issue)) {
-            return Response.status(Response.Status.NOT_FOUND).build();
+            return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResource(appMessages.issue_not_found())).build();
         }
 
         issue.confirmIssue = issue.confirmIssue + 1;
@@ -45,7 +53,7 @@ public class IssueResource {
     public Response getById(@PathParam("id") Long id) {
         Issue issue = Issue.findById(id);
         if (issue == null) {
-            return Response.status(Response.Status.NOT_FOUND).build();
+            return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResource(appMessages.issue_not_found())).build();
         }
         return Response.ok(issue).build();
     }
@@ -55,13 +63,31 @@ public class IssueResource {
     public Response create(@Valid Issue issue) {
 
         if(Objects.isNull(issue.reporter.id)) {
-            return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResource("Necessário informar um usuário!")).build();
+            return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResource(appMessages.user_required())).build();
         }
 
         FiscalizaiUser reporter = FiscalizaiUser.findById(issue.reporter.id);
 
         if(Objects.isNull(reporter)) {
-            return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResource("Usuário não encontrado")).build();
+            return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResource(appMessages.user_not_found())).build();
+        }
+
+        // Load Severity from database
+        if(Objects.nonNull(issue.severity) && Objects.nonNull(issue.severity.id)) {
+            Severity severity = Severity.findById(issue.severity.id);
+            if(Objects.isNull(severity)) {
+                return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResource(appMessages.severity_not_found())).build();
+            }
+            issue.severity = severity;
+        }
+
+        // Load Status from database
+        if(Objects.nonNull(issue.status) && Objects.nonNull(issue.status.id)) {
+            Status status = Status.findById(issue.status.id);
+            if(Objects.isNull(status)) {
+                return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResource(appMessages.status_not_found())).build();
+            }
+            issue.status = status;
         }
 
         issue.reporter = reporter;
@@ -75,17 +101,33 @@ public class IssueResource {
     public Response update(@PathParam("id") Long id, @Valid Issue updatedIssue) {
         Issue issue = Issue.findById(id);
         if (issue == null) {
-            return Response.status(Response.Status.NOT_FOUND).build();
+            return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResource(appMessages.issue_not_found())).build();
         }
 
         issue.description = updatedIssue.description;
-        issue.severity = updatedIssue.severity;
-        issue.status = updatedIssue.status;
         issue.confirmIssue = updatedIssue.confirmIssue;
         issue.category = updatedIssue.category;
         issue.photo = updatedIssue.photo;
         issue.reporter = updatedIssue.reporter;
         issue.address = updatedIssue.address;
+
+        // Load Severity from database
+        if(Objects.nonNull(updatedIssue.severity) && Objects.nonNull(updatedIssue.severity.id)) {
+            Severity severity = Severity.findById(updatedIssue.severity.id);
+            if(Objects.isNull(severity)) {
+                return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResource(appMessages.severity_not_found())).build();
+            }
+            issue.severity = severity;
+        }
+
+        // Load Status from database
+        if(Objects.nonNull(updatedIssue.status) && Objects.nonNull(updatedIssue.status.id)) {
+            Status status = Status.findById(updatedIssue.status.id);
+            if(Objects.isNull(status)) {
+                return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResource(appMessages.status_not_found())).build();
+            }
+            issue.status = status;
+        }
 
         return Response.ok(issue).build();
     }
@@ -96,7 +138,7 @@ public class IssueResource {
     public Response delete(@PathParam("id") Long id) {
         Issue issue = Issue.findById(id);
         if (issue == null) {
-            return Response.status(Response.Status.NOT_FOUND).build();
+            return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResource(appMessages.issue_not_found())).build();
         }
         issue.delete();
         return Response.noContent().build();
@@ -104,25 +146,41 @@ public class IssueResource {
 
     @GET
     @Path("/category/{categoryId}")
-    public List<Issue> listByCategory(@PathParam("categoryId") Long categoryId) {
-        return Issue.list("category.id", categoryId);
+    public Response listByCategory(@PathParam("categoryId") Long categoryId) {
+        List<Issue> issues = Issue.list("category.id", categoryId);
+        if (issues.isEmpty()) {
+            return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResource(appMessages.no_issues_found_for_category())).build();
+        }
+        return Response.ok(issues).build();
     }
 
     @GET
-    @Path("/status/{status}")
-    public List<Issue> listByStatus(@PathParam("status") Status status) {
-        return Issue.list("status", status);
+    @Path("/status/{statusId}")
+    public Response listByStatus(@PathParam("statusId") Long statusId) {
+        List<Issue> issues = Issue.list("status.id", statusId);
+        if (issues.isEmpty()) {
+            return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResource(appMessages.no_issues_found_for_status())).build();
+        }
+        return Response.ok(issues).build();
     }
 
     @GET
-    @Path("/severity/{severity}")
-    public List<Issue> listBySeverity(@PathParam("severity") Severity severity) {
-        return Issue.list("severity", severity);
+    @Path("/severity/{severityId}")
+    public Response listBySeverity(@PathParam("severityId") Long severityId) {
+        List<Issue> issues = Issue.list("severity.id", severityId);
+        if (issues.isEmpty()) {
+            return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResource(appMessages.no_issues_found_for_severity())).build();
+        }
+        return Response.ok(issues).build();
     }
 
     @GET
     @Path("/reporter/{reporterId}")
-    public List<Issue> listByReporter(@PathParam("reporterId") Long reporterId) {
-        return Issue.list("reporter.id", reporterId);
+    public Response listByReporter(@PathParam("reporterId") Long reporterId) {
+        List<Issue> issues = Issue.list("reporter.id", reporterId);
+        if (issues.isEmpty()) {
+            return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResource(appMessages.no_issues_found_for_reporter())).build();
+        }
+        return Response.ok(issues).build();
     }
 }

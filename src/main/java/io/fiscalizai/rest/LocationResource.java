@@ -1,7 +1,9 @@
 package io.fiscalizai.rest;
 
+import io.fiscalizai.config.RequestLocale;
 import io.fiscalizai.controller.restclient.BrazilApiClient;
 import io.fiscalizai.model.dto.ErrorResource;
+import io.fiscalizai.model.messages.AppMessages;
 import io.smallrye.mutiny.Uni;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
@@ -19,6 +21,10 @@ public class LocationResource {
     @RestClient
     BrazilApiClient brazilClient;
 
+    @Inject
+    @RequestLocale
+    AppMessages appMessages;
+
     @GET
     @Path("/cep/{cep}")
     public Uni<Response> findByCep(@PathParam("cep") String cep) {
@@ -28,11 +34,11 @@ public class LocationResource {
                     if (failure instanceof WebApplicationException webEx) {
                         int status = webEx.getResponse().getStatus();
                         return Response.status(status)
-                                .entity(new ErrorResource("Não foi possível localizar o CEP digitado."))
+                                .entity(new ErrorResource(appMessages.cep_not_found(cep)))
                                 .build();
                     }
                     return Response.status(Response.Status.BAD_GATEWAY)
-                            .entity(new ErrorResource("Serviço de CEP temporariamente indisponível."))
+                            .entity(new ErrorResource(appMessages.cep_service_unavailable()))
                             .build();
                 });
 

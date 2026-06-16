@@ -13,7 +13,10 @@ import java.util.List;
 @Entity
 public class Category extends PanacheEntity {
 
+    @Column(nullable = false, unique = true)
     public String name;
+
+    public String icon;
 
     @Column(length = 500)
     public String description;

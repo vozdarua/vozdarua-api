@@ -6,7 +6,6 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
-import java.util.Optional;
 
 @Entity
 public class Issue extends PanacheEntity {
@@ -14,8 +13,14 @@ public class Issue extends PanacheEntity {
     @Column(length = 1000)
     public String description;
 
+    @ManyToOne
+    @JoinColumn(name = "severity_id")
     public Severity severity;
+
+    @ManyToOne
+    @JoinColumn(name = "status_id")
     public Status status;
+
     public Integer confirmIssue;
 
     @ManyToOne
@@ -40,6 +45,22 @@ public class Issue extends PanacheEntity {
 
     @UpdateTimestamp
     private Instant updatedAt;
+
+    public Status getStatus() {
+        return status;
+    }
+
+    public void setStatus(Status status) {
+        this.status = status;
+    }
+
+    public Severity getSeverity() {
+        return severity;
+    }
+
+    public void setSeverity(Severity severity) {
+        this.severity = severity;
+    }
 
     public static Issue findByIdWithCategoryAndTags(Long id) {
         return Issue.find("SELECT i FROM Issue i LEFT JOIN FETCH i.category c LEFT JOIN FETCH c.tags WHERE i.id = ?1", id).firstResult();

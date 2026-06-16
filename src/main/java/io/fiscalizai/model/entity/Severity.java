@@ -1,24 +1,26 @@
 package io.fiscalizai.model.entity;
 
-public enum Severity {
-    LOW("Baixo"), MEDIUM("Médio"), HIGH("Alto");
+import io.quarkus.hibernate.orm.panache.PanacheEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
-    private final String severity;
+import java.time.Instant;
 
-    Severity(String severity) {
-        this.severity = severity;
-    }
+@Entity
+public class Severity extends PanacheEntity {
 
-    public String getSeverity() {
-        return this.severity;
-    }
+    @Column(nullable = false, unique = true)
+    public String name;
 
-    public static Severity fromSeverityName(String severity) {
-        for (Severity s : Severity.values()) {
-            if (s.getSeverity().equals(severity)) {
-                return s;
-            }
-        }
-        throw new IllegalArgumentException("Unknown severity: " + severity);
-    }
+    public String icon;
+
+    @CreationTimestamp
+    @Column(updatable = false)
+    private Instant createdAt;
+
+    @UpdateTimestamp
+    private Instant updatedAt;
+
 }

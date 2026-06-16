@@ -1,25 +1,26 @@
 package io.fiscalizai.model.entity;
 
-public enum Status {
+import io.quarkus.hibernate.orm.panache.PanacheEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
-    ACCEPT("Aceito"), RESOLVED("Resolvido"), ANALYZING("Em análise"), OPEN("Aberto");
+import java.time.Instant;
 
-    private final String status;
+@Entity
+public class Status extends PanacheEntity {
 
-    Status(String status) {
-        this.status = status;
-    }
+    @Column(nullable = false, unique = true)
+    public String name;
 
-    public String getStatus() {
-        return this.status;
-    }
+    public String icon;
 
-    public static Status fromStatusName(String status) {
-        for (Status s : Status.values()) {
-            if (s.getStatus().equals(status)) {
-                return s;
-            }
-        }
-        throw new IllegalArgumentException("Unknown Status: " + status);
-    }
+    @CreationTimestamp
+    @Column(updatable = false)
+    private Instant createdAt;
+
+    @UpdateTimestamp
+    private Instant updatedAt;
 }
