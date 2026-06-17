@@ -84,15 +84,22 @@ FROM registry.access.redhat.com/ubi9/openjdk-25-runtime:1.24
 
 ENV LANGUAGE='en_US:en'
 
+USER root
+COPY . /usr/src/app
+WORKDIR /usr/src/app
+# Run the maven build (skipping tests to speed up deployment)
+RUN ./mvnw package -DskipTests
 
-# We make four distinct layers so if there are application changes the library layers can be re-used
-COPY --chown=185 target/quarkus-app/lib/ /deployments/lib/
-COPY --chown=185 target/quarkus-app/*.jar /deployments/
-COPY --chown=185 target/quarkus-app/app/ /deployments/app/
-COPY --chown=185 target/quarkus-app/quarkus/ /deployments/quarkus/
+# Stage 2: Create the final runtime image
+FROM registry.access.redhat.com/ubi9/openjdk-21-runtime:1.24
+WORKDIR /deployments/
+# Copy the compiled assets from the 'build' stage
+COPY --from=build /usr/src/app/target/quarkus-app/lib/ /deployments/lib/
+COPY --from=build /usr/src/app/target/quarkus-app/*.jar /deployments/
+COPY --from=build /usr/src/app/target/quarkus-app/app/ /deployments/app/
+COPY --from=build /usr/src/app/target/quarkus-app/quarkus/ /deployments/quarkus/
 
 EXPOSE 8080
-USER 185
 ENV JAVA_OPTS_APPEND="-Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager"
 ENV JAVA_APP_JAR="/deployments/quarkus-run.jar"
 
