@@ -80,27 +80,24 @@
 # You can find more information about the UBI base runtime images and their configuration here:
 # https://rh-openjdk.github.io/redhat-openjdk-containers/
 ###
-FROM registry.access.redhat.com/ubi9/openjdk-25-runtime:1.24
-
-ENV LANGUAGE='en_US:en'
-
+# Stage 1: Build the application (Named 'builder-stage')
+FROM registry.access.redhat.com/ubi9/openjdk-25-runtime:1.24 AS builder-stage
 USER root
 COPY . /usr/src/app
 WORKDIR /usr/src/app
-# Run the maven build (skipping tests to speed up deployment)
 RUN ./mvnw package -DskipTests
 
 # Stage 2: Create the final runtime image
-FROM registry.access.redhat.com/ubi9/openjdk-21-runtime:1.24
+FROM registry.access.redhat.com/ubi9/openjdk-25-runtime:1.24
 WORKDIR /deployments/
-# Copy the compiled assets from the 'build' stage
-COPY --from=build /usr/src/app/target/quarkus-app/lib/ /deployments/lib/
-COPY --from=build /usr/src/app/target/quarkus-app/*.jar /deployments/
-COPY --from=build /usr/src/app/target/quarkus-app/app/ /deployments/app/
-COPY --from=build /usr/src/app/target/quarkus-app/quarkus/ /deployments/quarkus/
+
+# Explicitly copy from 'builder-stage' so Docker doesn't look online
+COPY --from=builder-stage /usr/src/app/target/quarkus-app/lib/ /deployments/lib/
+COPY --from=builder-stage /usr/src/app/target/quarkus-app/*.jar /deployments/
+COPY --from=builder-stage /usr/src/app/target/quarkus-app/app/ /deployments/app/
+COPY --from=builder-stage /usr/src/app/target/quarkus-app/quarkus/ /deployments/quarkus/
 
 EXPOSE 8080
-ENV JAVA_OPTS_APPEND="-Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager"
 ENV JAVA_APP_JAR="/deployments/quarkus-run.jar"
 
 ENTRYPOINT [ "/opt/jboss/container/java/run/run-java.sh" ]
