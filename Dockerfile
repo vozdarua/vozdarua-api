@@ -80,30 +80,30 @@
 # You can find more information about the UBI base runtime images and their configuration here:
 # https://rh-openjdk.github.io/redhat-openjdk-containers/
 ###
+
 # Stage 1: Build the application (Named 'builder-stage')
-# Stage 1: Build the application
 FROM registry.access.redhat.com/ubi9/openjdk-21:1.24 AS builder-stage
 USER root
 
-# DigitalOcean places your code in the default working directory.
-# We stay right here and copy the files locally.
-COPY . .
+# Set the working directory
+WORKDIR /workspace
 
-# Let's make sure the wrapper has execution permissions just in case
+# Force Docker to pull from DigitalOcean's exact workspace folder
+COPY /.app_platform_workspace ./
+
+# Fix permissions and build
 RUN chmod +x mvnw
-
-# Run the maven build
 RUN ./mvnw package -DskipTests
 
 # Stage 2: Create the final runtime image
 FROM registry.access.redhat.com/ubi9/openjdk-21-runtime:1.24
 WORKDIR /deployments/
 
-# Copy the compiled assets from the builder-stage relative paths
-COPY --from=builder-stage target/quarkus-app/lib/ /deployments/lib/
-COPY --from=builder-stage target/quarkus-app/*.jar /deployments/
-COPY --from=builder-stage target/quarkus-app/app/ /deployments/app/
-COPY --from=builder-stage target/quarkus-app/quarkus/ /deployments/quarkus/
+# Copy the compiled assets from the /workspace folder of the builder stage
+COPY --from=builder-stage /workspace/target/quarkus-app/lib/ /deployments/lib/
+COPY --from=builder-stage /workspace/target/quarkus-app/*.jar /deployments/
+COPY --from=builder-stage /workspace/target/quarkus-app/app/ /deployments/app/
+COPY --from=builder-stage /workspace/target/quarkus-app/quarkus/ /deployments/quarkus/
 
 EXPOSE 8080
 ENV JAVA_APP_JAR="/deployments/quarkus-run.jar"
