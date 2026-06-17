@@ -81,21 +81,29 @@
 # https://rh-openjdk.github.io/redhat-openjdk-containers/
 ###
 # Stage 1: Build the application (Named 'builder-stage')
-FROM registry.access.redhat.com/ubi9/openjdk-25-runtime:1.24 AS builder-stage
+# Stage 1: Build the application
+FROM registry.access.redhat.com/ubi9/openjdk-21:1.24 AS builder-stage
 USER root
-COPY . /usr/src/app
-WORKDIR /usr/src/app
+
+# DigitalOcean places your code in the default working directory.
+# We stay right here and copy the files locally.
+COPY . .
+
+# Let's make sure the wrapper has execution permissions just in case
+RUN chmod +x mvnw
+
+# Run the maven build
 RUN ./mvnw package -DskipTests
 
 # Stage 2: Create the final runtime image
-FROM registry.access.redhat.com/ubi9/openjdk-25-runtime:1.24
+FROM registry.access.redhat.com/ubi9/openjdk-21-runtime:1.24
 WORKDIR /deployments/
 
-# Explicitly copy from 'builder-stage' so Docker doesn't look online
-COPY --from=builder-stage /usr/src/app/target/quarkus-app/lib/ /deployments/lib/
-COPY --from=builder-stage /usr/src/app/target/quarkus-app/*.jar /deployments/
-COPY --from=builder-stage /usr/src/app/target/quarkus-app/app/ /deployments/app/
-COPY --from=builder-stage /usr/src/app/target/quarkus-app/quarkus/ /deployments/quarkus/
+# Copy the compiled assets from the builder-stage relative paths
+COPY --from=builder-stage target/quarkus-app/lib/ /deployments/lib/
+COPY --from=builder-stage target/quarkus-app/*.jar /deployments/
+COPY --from=builder-stage target/quarkus-app/app/ /deployments/app/
+COPY --from=builder-stage target/quarkus-app/quarkus/ /deployments/quarkus/
 
 EXPOSE 8080
 ENV JAVA_APP_JAR="/deployments/quarkus-run.jar"
