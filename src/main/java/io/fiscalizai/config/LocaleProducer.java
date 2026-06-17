@@ -31,19 +31,19 @@ public class LocaleProducer {
     @RequestScoped
     @RequestLocale
     public AppMessages getAppMessages() {
-        LOG.infof("Getting AppMessages for headers: %s", headers);
+        LOG.tracef("Getting AppMessages for headers: %s", headers);
         if (headers != null && headers.getAcceptableLanguages() != null && !headers.getAcceptableLanguages().isEmpty()) {
             Locale locale = headers.getAcceptableLanguages().get(0);
-            LOG.infof("Detected locale: %s, language: %s", locale, locale.getLanguage());
+            LOG.tracef("Detected locale: %s, language: %s", locale, locale.getLanguage());
             if (!locale.equals(Locale.ROOT) && !locale.getLanguage().equals("*")) {
                 String lang = locale.getLanguage();
                 if ("en".equalsIgnoreCase(lang)) {
-                    LOG.info("Returning English messages");
+                    LOG.trace("Returning English messages");
                     return appMessagesEn;
                 }
             }
         }
-        LOG.info("Returning Portuguese messages");
+        LOG.trace("Returning Portuguese messages");
         return appMessagesPtBr;
     }
 }

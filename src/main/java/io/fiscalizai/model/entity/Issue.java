@@ -23,6 +23,8 @@ public class Issue extends PanacheEntity {
 
     public Integer confirmIssue;
 
+    public boolean anonymous;
+
     @ManyToOne
     @JoinColumn(name = "category_id")
     public Category category;

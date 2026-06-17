@@ -84,7 +84,12 @@ class IssueResourceTest {
                 "address": {
                      "latitude": -23.5505,
                      "longitude": -46.6333,
-                     "location": "São Paulo, SP"
+                     "cep": "12236-420",
+                     "street": "Rua Joana Soares Ferreira",
+                     "number": "662",
+                     "neighborhood": "Cidade Morumbi",
+                     "city": "São José dos Campos",
+                     "state": "SP"
                 }
             }
             """, severityHighId, statusOpenId, categoryId, userId);
@@ -162,7 +167,12 @@ class IssueResourceTest {
                 "address": {
                      "latitude": -23.5505,
                      "longitude": -46.6333,
-                     "location": "São Paulo, SP"
+                     "cep": "12236-420",
+                     "street": "Rua Joana Soares Ferreira",
+                     "number": "662",
+                     "neighborhood": "Cidade Morumbi",
+                     "city": "São José dos Campos",
+                     "state": "SP"
                 }
             }
             """, severityHighId, statusAnalyzingId, categoryId, userId);
@@ -193,7 +203,12 @@ class IssueResourceTest {
                 "address": {
                      "latitude": -23.5505,
                      "longitude": -46.6333,
-                     "location": "São Paulo, SP"
+                     "cep": "12236-420",
+                     "street": "Rua Joana Soares Ferreira",
+                     "number": "662",
+                     "neighborhood": "Cidade Morumbi",
+                     "city": "São José dos Campos",
+                     "state": "SP"
                 }
             }
             """, severityMediumId, statusOpenId, categoryId, userId);
@@ -317,7 +332,12 @@ class IssueResourceTest {
                 "address": {
                      "latitude": -23.5505,
                      "longitude": -46.6333,
-                     "location": "São Paulo, SP"
+                     "cep": "12236-420",
+                     "street": "Rua Joana Soares Ferreira",
+                     "number": "662",
+                     "neighborhood": "Cidade Morumbi",
+                     "city": "São José dos Campos",
+                     "state": "SP"
                 }
             }
             """, severityHighId, statusOpenId, categoryId, userId);
