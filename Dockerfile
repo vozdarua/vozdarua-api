@@ -4,7 +4,7 @@
 ###
 
 # Stage 1: Build stage
-FROM registry.access.redhat.com/ubi9/openjdk-25:1.24 AS build
+FROM registry.access.redhat.com/ubi9/openjdk-21:1.20 AS build
 
 WORKDIR /build
 
@@ -20,10 +20,11 @@ RUN ./mvnw dependency:go-offline
 COPY src src
 
 # Build the application
-RUN ./mvnw package -DskipTests
+RUN ./mvnw package -DskipTests && \
+    ls -la target/quarkus-app/
 
 # Stage 2: Runtime stage
-FROM registry.access.redhat.com/ubi9/openjdk-25-runtime:1.24
+FROM registry.access.redhat.com/ubi9/openjdk-21-runtime:1.20
 
 ENV LANGUAGE='en_US:en'
 
