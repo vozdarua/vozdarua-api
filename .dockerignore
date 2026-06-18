@@ -1,5 +1,17 @@
-*
-!target/*-runner
-!target/*-runner.jar
-!target/lib/*
-!target/quarkus-app/*
+# Exclude build artifacts and unnecessary files
+target/
+!target/quarkus-app/
+
+# Exclude version control
+.git
+.gitignore
+
+# Exclude IDE files
+.idea
+.vscode
+*.iml
+
+# Exclude other unnecessary files
+.dockerignore
+README.md
+*.md
