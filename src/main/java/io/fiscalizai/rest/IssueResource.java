@@ -2,6 +2,7 @@ package io.fiscalizai.rest;
 
 import io.fiscalizai.config.RequestLocale;
 import io.fiscalizai.model.dto.ErrorResource;
+import io.fiscalizai.model.dto.ImageUploadForm;
 import io.fiscalizai.model.entity.*;
 import io.fiscalizai.model.messages.AppMessages;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
@@ -11,9 +12,14 @@ import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 @Path("/issues")
 @Produces(MediaType.APPLICATION_JSON)
@@ -23,6 +29,18 @@ public class IssueResource {
     @Inject
     @RequestLocale
     AppMessages appMessages;
+
+    @Inject
+    S3Client s3;
+
+    @ConfigProperty(name = "cloudflare.r2.bucket-name")
+    String bucketName;
+
+    @ConfigProperty(name = "cloudflare.r2.public-url")
+    String publicR2Url;
+
+    @ConfigProperty(name= "cloudflare.r2.folder-name")
+    private String folderName;
 
     @GET
     public Response listAll() {
@@ -182,5 +200,45 @@ public class IssueResource {
             return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResource(appMessages.no_issues_found_for_reporter())).build();
         }
         return Response.ok(issues).build();
+    }
+
+    @POST
+    @Path("/image/upload")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Transactional
+    public Response uploadToR2(ImageUploadForm form) {
+
+        if (form.file == null) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(new ErrorResource(appMessages.r2_missing_file())).build();
+        }
+
+        String name = UUID.randomUUID() + "-" + form.file.fileName();
+        String fileKey = folderName + name;
+
+        try {
+            PutObjectRequest putRequest = PutObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(fileKey)
+                    .contentType(form.file.contentType())
+                    .build();
+
+            // Stream the file up to Cloudflare R2
+            s3.putObject(putRequest, RequestBody.fromFile(form.file.filePath()));
+
+            // Construct the access URL if public access is enabled in Cloudflare dashboard
+            String publicUrl = publicR2Url + fileKey;
+
+            Image image = new Image();
+            image.name = name;
+            image.s3Key = fileKey;
+            image.s3Url = publicUrl;
+            image.persist();
+
+            return Response.ok(image).build();
+
+        } catch (Exception e) {
+            return Response.serverError().entity(new ErrorResource(appMessages.r2_upload_file(e.getMessage()))).build();
+        }
     }
 }

@@ -47,4 +47,10 @@ public interface AppMessages {
 
     @Message
     String no_issues_found_for_reporter();
+
+    @Message
+    String r2_missing_file();
+
+    @Message
+    String r2_upload_file(String exception);
 }

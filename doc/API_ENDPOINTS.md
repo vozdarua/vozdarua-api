@@ -232,6 +232,66 @@ GET /issues/reporter/{reporterId}
 
 ---
 
+### 1.11. Upload de Imagem para Cloudflare R2
+
+```
+POST /issues/image/upload
+```
+
+**Content-Type**: `multipart/form-data`
+
+**Descrição**: Faz upload de uma imagem para o Cloudflare R2 (S3-compatible storage) e retorna os dados da imagem persistida no banco de dados. A URL pública da imagem pode ser usada no campo `photo` ao criar ou atualizar uma ocorrência.
+
+**Parâmetros (Form Data)**:
+- `file` (file) - Arquivo de imagem a ser enviado
+
+**Exemplo de Requisição**:
+```bash
+curl -X POST http://localhost:8080/issues/image/upload \
+  -H "Content-Type: multipart/form-data" \
+  -F "file=@/path/to/image.jpg"
+```
+
+**Resposta de Sucesso**: `200 OK`
+```json
+{
+  "id": 1,
+  "name": "550e8400-e29b-41d4-a716-446655440000-image.jpg",
+  "s3Key": "fiscalizai-images/550e8400-e29b-41d4-a716-446655440000-image.jpg",
+  "s3Url": "https://pub-xyz123.r2.dev/fiscalizai-images/550e8400-e29b-41d4-a716-446655440000-image.jpg"
+}
+```
+
+**Campos de Resposta**:
+- `id` - ID da imagem no banco de dados
+- `name` - Nome único gerado para o arquivo (UUID + nome original)
+- `s3Key` - Chave do objeto no bucket R2
+- `s3Url` - URL pública para acessar a imagem
+
+**Respostas de Erro**:
+
+- `400 BAD REQUEST` - Arquivo não fornecido
+```json
+{
+  "message": "Arquivo não fornecido para upload"
+}
+```
+
+- `500 INTERNAL SERVER ERROR` - Erro ao fazer upload
+```json
+{
+  "message": "Erro ao fazer upload do arquivo: [detalhes do erro]"
+}
+```
+
+**Observações**:
+- O arquivo é armazenado com um UUID único para evitar conflitos de nomes
+- A URL retornada (`s3Url`) pode ser usada diretamente no campo `photo` das ocorrências
+- O tipo de conteúdo (Content-Type) do arquivo é preservado no R2
+- Certifique-se de que o bucket R2 está configurado para acesso público se desejar que as URLs sejam acessíveis
+
+---
+
 ## 2. Users (Usuários)
 
 **Base Path**: `/user`
