@@ -49,6 +49,15 @@ public interface AppMessages {
     String no_issues_found_for_reporter();
 
     @Message
+    String no_issues_found_for_city(String cityName);
+
+    @Message
+    String no_issues_found_for_address();
+
+    @Message
+    String address_parameters_required();
+
+    @Message
     String r2_missing_file();
 
     @Message

@@ -202,6 +202,56 @@ public class IssueResource {
         return Response.ok(issues).build();
     }
 
+    @GET
+    @Path("/address")
+    public Response listByAddress(
+            @QueryParam("city") String cityName,
+            @QueryParam("state") String state,
+            @QueryParam("neighborhood") String neighborhood) {
+
+        StringBuilder queryBuilder = new StringBuilder();
+        Object[] params = new Object[3];
+        int paramIndex = 0;
+
+        if (cityName != null && !cityName.isEmpty()) {
+            queryBuilder.append("address.city = ?").append(++paramIndex);
+            params[paramIndex - 1] = cityName;
+        }
+
+        if (state != null && !state.isEmpty()) {
+            if (queryBuilder.length() > 0) {
+                queryBuilder.append(" and ");
+            }
+            queryBuilder.append("address.state = ?").append(++paramIndex);
+            params[paramIndex - 1] = state;
+        }
+
+        if (neighborhood != null && !neighborhood.isEmpty()) {
+            if (queryBuilder.length() > 0) {
+                queryBuilder.append(" and ");
+            }
+            queryBuilder.append("address.neighborhood = ?").append(++paramIndex);
+            params[paramIndex - 1] = neighborhood;
+        }
+
+        if (queryBuilder.length() == 0) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorResource(appMessages.address_parameters_required()))
+                    .build();
+        }
+
+        Object[] actualParams = new Object[paramIndex];
+        System.arraycopy(params, 0, actualParams, 0, paramIndex);
+
+        List<Issue> issues = Issue.list(queryBuilder.toString(), actualParams);
+        if (issues.isEmpty()) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(new ErrorResource(appMessages.no_issues_found_for_address()))
+                    .build();
+        }
+        return Response.ok(issues).build();
+    }
+
     @POST
     @Path("/image/upload")
     @Consumes(MediaType.MULTIPART_FORM_DATA)

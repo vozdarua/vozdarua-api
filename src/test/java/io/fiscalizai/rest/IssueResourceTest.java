@@ -320,6 +320,214 @@ class IssueResourceTest {
                 .body("confirmIssue", equalTo(1));
     }
 
+    @Test
+    @Order(14)
+    void testListIssuesByAddressWithCity() {
+        createTestIssueViaAPI();
+
+        given()
+                .queryParam("city", "São José dos Campos")
+                .when()
+                .get("/issues/address")
+                .then()
+                .statusCode(200)
+                .body("$", hasSize(1))
+                .body("[0].address.city", equalTo("São José dos Campos"));
+    }
+
+    @Test
+    @Order(15)
+    void testListIssuesByAddressWithState() {
+        createTestIssueViaAPI();
+
+        given()
+                .queryParam("state", "SP")
+                .when()
+                .get("/issues/address")
+                .then()
+                .statusCode(200)
+                .body("$", hasSize(1))
+                .body("[0].address.state", equalTo("SP"));
+    }
+
+    @Test
+    @Order(16)
+    void testListIssuesByAddressWithNeighborhood() {
+        createTestIssueViaAPI();
+
+        given()
+                .queryParam("neighborhood", "Cidade Morumbi")
+                .when()
+                .get("/issues/address")
+                .then()
+                .statusCode(200)
+                .body("$", hasSize(1))
+                .body("[0].address.neighborhood", equalTo("Cidade Morumbi"));
+    }
+
+    @Test
+    @Order(17)
+    void testListIssuesByAddressWithCityAndState() {
+        createTestIssueViaAPI();
+
+        given()
+                .queryParam("city", "São José dos Campos")
+                .queryParam("state", "SP")
+                .when()
+                .get("/issues/address")
+                .then()
+                .statusCode(200)
+                .body("$", hasSize(1))
+                .body("[0].address.city", equalTo("São José dos Campos"))
+                .body("[0].address.state", equalTo("SP"));
+    }
+
+    @Test
+    @Order(18)
+    void testListIssuesByAddressWithCityAndNeighborhood() {
+        createTestIssueViaAPI();
+
+        given()
+                .queryParam("city", "São José dos Campos")
+                .queryParam("neighborhood", "Cidade Morumbi")
+                .when()
+                .get("/issues/address")
+                .then()
+                .statusCode(200)
+                .body("$", hasSize(1))
+                .body("[0].address.city", equalTo("São José dos Campos"))
+                .body("[0].address.neighborhood", equalTo("Cidade Morumbi"));
+    }
+
+    @Test
+    @Order(19)
+    void testListIssuesByAddressWithStateAndNeighborhood() {
+        createTestIssueViaAPI();
+
+        given()
+                .queryParam("state", "SP")
+                .queryParam("neighborhood", "Cidade Morumbi")
+                .when()
+                .get("/issues/address")
+                .then()
+                .statusCode(200)
+                .body("$", hasSize(1))
+                .body("[0].address.state", equalTo("SP"))
+                .body("[0].address.neighborhood", equalTo("Cidade Morumbi"));
+    }
+
+    @Test
+    @Order(20)
+    void testListIssuesByAddressWithAllParameters() {
+        createTestIssueViaAPI();
+
+        given()
+                .queryParam("city", "São José dos Campos")
+                .queryParam("state", "SP")
+                .queryParam("neighborhood", "Cidade Morumbi")
+                .when()
+                .get("/issues/address")
+                .then()
+                .statusCode(200)
+                .body("$", hasSize(1))
+                .body("[0].address.city", equalTo("São José dos Campos"))
+                .body("[0].address.state", equalTo("SP"))
+                .body("[0].address.neighborhood", equalTo("Cidade Morumbi"));
+    }
+
+    @Test
+    @Order(21)
+    void testListIssuesByAddressNotFound() {
+        createTestIssueViaAPI();
+
+        given()
+                .queryParam("city", "Rio de Janeiro")
+                .when()
+                .get("/issues/address")
+                .then()
+                .statusCode(404);
+    }
+
+    @Test
+    @Order(22)
+    void testListIssuesByAddressNoParameters() {
+        given()
+                .when()
+                .get("/issues/address")
+                .then()
+                .statusCode(400);
+    }
+
+    @Test
+    @Order(23)
+    void testListIssuesByAddressEmptyParameters() {
+        given()
+                .queryParam("city", "")
+                .queryParam("state", "")
+                .queryParam("neighborhood", "")
+                .when()
+                .get("/issues/address")
+                .then()
+                .statusCode(400);
+    }
+
+    @Test
+    @Order(24)
+    @Transactional
+    void testListIssuesByAddressMultipleResults() {
+        // Create first issue
+        createTestIssueViaAPI();
+
+        // Create second issue with same city but different neighborhood
+        String secondIssueJson = String.format("""
+            {
+                "description": "Outro problema na cidade",
+                "severity": {"id": %d},
+                "status": {"id": %d},
+                "confirmIssue": 0,
+                "category": {"id": %d},
+                "reporter": {"id": %d},
+                "address": {
+                     "latitude": -23.5505,
+                     "longitude": -46.6333,
+                     "cep": "12236-421",
+                     "street": "Rua Outra",
+                     "number": "100",
+                     "neighborhood": "Centro",
+                     "city": "São José dos Campos",
+                     "state": "SP"
+                }
+            }
+            """, severityMediumId, statusOpenId, categoryId, userId);
+
+        given()
+                .contentType(ContentType.JSON)
+                .body(secondIssueJson)
+                .when()
+                .post("/issues")
+                .then()
+                .statusCode(201);
+
+        // Query by city should return both
+        given()
+                .queryParam("city", "São José dos Campos")
+                .when()
+                .get("/issues/address")
+                .then()
+                .statusCode(200)
+                .body("$", hasSize(2));
+
+        // Query by specific neighborhood should return only one
+        given()
+                .queryParam("neighborhood", "Centro")
+                .when()
+                .get("/issues/address")
+                .then()
+                .statusCode(200)
+                .body("$", hasSize(1))
+                .body("[0].address.neighborhood", equalTo("Centro"));
+    }
+
     Long createTestIssueViaAPI() {
         String issueJson = String.format("""
             {
