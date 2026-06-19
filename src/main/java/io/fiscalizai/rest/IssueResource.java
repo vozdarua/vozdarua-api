@@ -209,8 +209,12 @@ public class IssueResource {
     @Transactional
     public Response uploadToR2(ImageUploadForm form) {
 
-        if (form.file == null) {
+        if (Objects.isNull(form.file) || form.file.size() == 0) {
             return Response.status(Response.Status.BAD_REQUEST).entity(new ErrorResource(appMessages.r2_missing_file())).build();
+        }
+
+        if (!form.file.contentType().startsWith("image/")) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(new ErrorResource(appMessages.not_valid_image())).build();
         }
 
         String name = UUID.randomUUID() + "-" + form.file.fileName();

@@ -53,4 +53,7 @@ public interface AppMessages {
 
     @Message
     String r2_upload_file(String exception);
+
+    @Message
+    String not_valid_image();
 }
