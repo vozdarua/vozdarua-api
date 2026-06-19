@@ -21,8 +21,8 @@ class CategoriesResourceTest {
     @Transactional
     void setup() {
         // Delete in order to avoid foreign key constraint violations
-        Issue.deleteAll();
         Category.deleteAll();
+        Issue.deleteAll();
     }
 
     @Test
