@@ -1,4 +1,4 @@
--- Insert categories from fiscalizai_categorias.csv
+-- Insert categories from vozdarua_categorias.csv
 INSERT INTO Category (id, name, icon, description, createdAt, updatedAt) VALUES (1, 'Buraco no asfalto', '🕳️', 'Cratera na rua, remendo solto, asfalto afundado', '2026-06-12 00:00:00', '2026-06-12 00:00:00');
 INSERT INTO category_tags (category_id, tag) VALUES (1, 'buraco'), (1, 'asfalto'), (1, 'cova'), (1, 'cratera'), (1, 'remendo'), (1, 'via'), (1, 'pista');
 

@@ -1,8 +1,8 @@
-# FiscalizAI API - Documentação
+# Voz da Rua API - Documentação
 
 ## Visão Geral do Projeto
 
-**FiscalizAI** é uma API RESTful desenvolvida para empoderar cidadãos a fiscalizar e reportar problemas urbanos em suas cidades. O sistema permite que usuários registrem ocorrências como buracos nas ruas, iluminação pública defeituosa, acúmulo de lixo, problemas de sinalização, entre outros, contribuindo para uma gestão municipal mais transparente e eficiente.
+**Voz da Rua** é uma API RESTful desenvolvida para empoderar cidadãos a fiscalizar e reportar problemas urbanos em suas cidades. O sistema permite que usuários registrem ocorrências como buracos nas ruas, iluminação pública defeituosa, acúmulo de lixo, problemas de sinalização, entre outros, contribuindo para uma gestão municipal mais transparente e eficiente.
 
 ### Objetivo
 
@@ -56,8 +56,8 @@ Sistema de confirmação onde múltiplos usuários podem validar uma ocorrência
 ## Arquitetura
 
 ```
-fiscalizai-api/
-├── src/main/java/io/fiscalizai/
+vozdarua-api/
+├── src/main/java/io/vozdarua/
 │   ├── config/          # Configurações da aplicação
 │   ├── controller/      # Clientes REST externos
 │   ├── model/           # Entidades e DTOs
