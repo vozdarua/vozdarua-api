@@ -1,10 +1,10 @@
-# FiscalizAI API
+# Voz da Rua API
 
 A REST API for managing civic issues and community reports, built with Quarkus.
 
 ## Overview
 
-FiscalizAI is a citizen reporting platform that empowers citizens to monitor and report urban infrastructure issues in their cities. Users can report problems like potholes, broken street lights, garbage accumulation, traffic signs issues, and other civic problems.
+Voz da Rua is a citizen reporting platform that empowers citizens to monitor and report urban infrastructure issues in their cities. Users can report problems like potholes, broken street lights, garbage accumulation, traffic signs issues, and other civic problems.
 
 ## Tech Stack
 

@@ -1,6 +1,6 @@
 # Guia de Início Rápido
 
-Este guia ajudará você a começar a usar a API FiscalizAI rapidamente.
+Este guia ajudará você a começar a usar a API Voz da Rua rapidamente.
 
 ## Pré-requisitos
 
@@ -14,8 +14,8 @@ Este guia ajudará você a começar a usar a API FiscalizAI rapidamente.
 ### 1. Clone o Repositório
 
 ```bash
-git clone https://github.com/seu-usuario/fiscalizai-api.git
-cd fiscalizai-api
+git clone https://github.com/seu-usuario/vozdarua-api.git
+cd vozdarua-api
 ```
 
 ### 2. Configure o Banco de Dados
@@ -25,16 +25,16 @@ cd fiscalizai-api
 Crie um banco de dados PostgreSQL:
 
 ```sql
-CREATE DATABASE fiscalizai_db;
+CREATE DATABASE vozdarua_db;
 CREATE USER postgres WITH PASSWORD 'secret';
-GRANT ALL PRIVILEGES ON DATABASE fiscalizai_db TO postgres;
+GRANT ALL PRIVILEGES ON DATABASE vozdarua_db TO postgres;
 ```
 
 #### Opção B: Docker
 
 ```bash
-docker run --name fiscalizai-postgres \
-  -e POSTGRES_DB=fiscalizai_db \
+docker run --name vozdarua-postgres \
+  -e POSTGRES_DB=vozdarua_db \
   -e POSTGRES_USER=postgres \
   -e POSTGRES_PASSWORD=secret \
   -p 5432:5432 \
@@ -302,7 +302,7 @@ Para deploy em produção, configure:
 ```bash
 export DB_HOST=seu-host-postgres.com
 export DB_PORT=5432
-export DB_NAME=fiscalizai_db
+export DB_NAME=vozdarua_db
 export DB_USERNAME=seu_usuario
 export DB_PASSWORD=sua_senha_segura
 export PORT=8080
@@ -313,7 +313,7 @@ Ou crie um arquivo `.env`:
 ```
 DB_HOST=seu-host-postgres.com
 DB_PORT=5432
-DB_NAME=fiscalizai_db
+DB_NAME=vozdarua_db
 DB_USERNAME=seu_usuario
 DB_PASSWORD=sua_senha_segura
 PORT=8080
@@ -328,7 +328,7 @@ PORT=8080
 Verifique se:
 1. PostgreSQL está rodando
 2. Credenciais em `application.properties` estão corretas
-3. Banco `fiscalizai_db` foi criado
+3. Banco `vozdarua_db` foi criado
 
 ### Erro: "Port 8080 already in use"
 

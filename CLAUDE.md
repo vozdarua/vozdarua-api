@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-FiscalizAI is a citizen reporting platform API built with Quarkus 3.36.1 and Java 21. It enables citizens to report and track urban infrastructure issues (potholes, broken street lights, garbage accumulation, etc.). The API uses PostgreSQL with Hibernate Panache for data access, and integrates with Cloudflare R2 for image storage and BrasilAPI for Brazilian postal code validation.
+Voz da Rua is a citizen reporting platform API built with Quarkus 3.36.1 and Java 21. It enables citizens to report and track urban infrastructure issues (potholes, broken street lights, garbage accumulation, etc.). The API uses PostgreSQL with Hibernate Panache for data access, and integrates with Cloudflare R2 for image storage and BrasilAPI for Brazilian postal code validation.
 
 ## Development Commands
 
@@ -55,7 +55,7 @@ Build native executable (requires GraalVM or container):
 ### Package Structure
 
 ```
-src/main/java/io/fiscalizai/
+src/main/java/io/vozdarua/
 ├── config/              # Application configuration (locale, CDI producers)
 ├── controller/
 │   └── restclient/      # External REST clients (BrasilAPI for CEP validation)
@@ -74,11 +74,11 @@ All entities extend `PanacheEntity` which provides:
 - Active record pattern: `entity.persist()`, `entity.delete()`
 
 Main entities:
-- **Issue**: Urban problem reports with relationships to Category, Severity, Status, FiscalizaiUser (reporter), Address, and Image (photo)
+- **Issue**: Urban problem reports with relationships to Category, Severity, Status, User (reporter), Address, and Image (photo)
 - **Category**: Classification of issue types
 - **Severity**: Issue severity levels
 - **Status**: Issue lifecycle states
-- **FiscalizaiUser**: System users who report issues
+- **User**: System users who report issues
 - **Address**: Location information for issues
 - **Image**: Photo evidence stored in Cloudflare R2
 
@@ -120,7 +120,7 @@ When adding user-facing messages, add them to both property files.
 ### External Integrations
 
 **BrasilAPI Client**: Validates Brazilian postal codes (CEP)
-- Interface: `io.fiscalizai.controller.restclient.BrazilApiClient`
+- Interface: `io.vozdarua.controller.restclient.BrazilApiClient`
 - Returns reactive `Uni<CepLocation>` for async processing
 - Base URI: `https://brasilapi.com.br/api/cep/v1`
 
@@ -135,7 +135,7 @@ When adding user-facing messages, add them to both property files.
 Quarkus uses profiles (dev, test, prod) via `application.properties`:
 
 **Dev profile** (`%dev.`):
-- Database: Local PostgreSQL (localhost:5432/fiscalizai_db)
+- Database: Local PostgreSQL (localhost:5432/vozdarua_db)
 - Schema: `drop-and-create` (resets on restart)
 - Imports `import.sql` for seed data
 
@@ -154,10 +154,10 @@ Quarkus uses profiles (dev, test, prod) via `application.properties`:
 Requires PostgreSQL. For development:
 ```bash
 # Docker option
-docker run -d --name fiscalizai-db \
+docker run -d --name vozdarua-db \
   -e POSTGRES_USER=postgres \
   -e POSTGRES_PASSWORD=secret \
-  -e POSTGRES_DB=fiscalizai_db \
+  -e POSTGRES_DB=vozdarua_db \
   -p 5432:5432 \
   postgres:16
 ```

@@ -1,6 +1,6 @@
 # Glossário - Termos Técnicos (Inglês → Português)
 
-Este glossário apresenta a tradução dos termos utilizados na API e no código-fonte do FiscalizAI.
+Este glossário apresenta a tradução dos termos utilizados na API e no código-fonte do Voz da Rua.
 
 ## Termos Principais
 

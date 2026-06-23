@@ -1,6 +1,6 @@
 # Documentação dos Endpoints da API
 
-Esta documentação apresenta todos os endpoints disponíveis na API FiscalizAI, organizados por recurso.
+Esta documentação apresenta todos os endpoints disponíveis na API Voz da Rua, organizados por recurso.
 
 ## Índice
 

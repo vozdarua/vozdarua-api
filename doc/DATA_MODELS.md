@@ -1,11 +1,11 @@
 # Modelos de Dados
 
-Esta documentação descreve as entidades e estruturas de dados utilizadas pela API FiscalizAI.
+Esta documentação descreve as entidades e estruturas de dados utilizadas pela API Voz da Rua.
 
 ## Índice
 
 1. [Issue (Ocorrência)](#issue-ocorrência)
-2. [FiscalizaiUser (Usuário)](#fiscalizaiuser-usuário)
+2. [FiscalizaiUser (Usuário)](#user-usuário)
 3. [Category (Categoria)](#category-categoria)
 4. [Status](#status)
 5. [Severity (Severidade)](#severity-severidade)
