@@ -2,8 +2,10 @@ package io.vozdarua.rest;
 
 import io.vozdarua.model.entity.*;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.security.TestSecurity;
 import io.restassured.http.ContentType;
 import jakarta.transaction.Transactional;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.*;
 
 import static io.restassured.RestAssured.given;
@@ -17,6 +19,7 @@ class IssueResourceTest {
     private Long createdIssueId;
     private Long categoryId;
     private Long userId;
+    private Long adminId;
     private Long severityHighId;
     private Long severityMediumId;
     private Long statusOpenId;
@@ -66,6 +69,8 @@ class IssueResourceTest {
         User user = new User();
         user.phone = "11999999999";
         user.password = "test123";
+        user.email = "test@example.com";
+        user.role = Roles.USER;
         user.persist();
         userId = user.id;
     }
@@ -115,7 +120,7 @@ class IssueResourceTest {
     @Order(2)
     void testListAllIssues() {
         // Create test issue first
-        Long issueId = createTestIssueViaAPI();
+        Long issueId = createTestIssueViaAPI(false);
 
         given()
                 .when()
@@ -129,7 +134,7 @@ class IssueResourceTest {
     @Test
     @Order(3)
     void testGetIssueById() {
-        Long issueId = createTestIssueViaAPI();
+        Long issueId = createTestIssueViaAPI(false);
 
         given()
                 .when()
@@ -153,8 +158,9 @@ class IssueResourceTest {
 
     @Test
     @Order(5)
+    @TestSecurity(user = "test@example.com", roles = {"USER"})
     void testUpdateIssue() {
-        Long issueId = createTestIssueViaAPI();
+        Long issueId = createTestIssueViaAPI(false);
 
         String updatedJson = String.format("""
             {
@@ -191,6 +197,7 @@ class IssueResourceTest {
 
     @Test
     @Order(6)
+    @TestSecurity(user = "test@example.com", roles = {"USER"})
     void testUpdateIssueNotFound() {
         String updatedJson = String.format("""
             {
@@ -224,8 +231,9 @@ class IssueResourceTest {
 
     @Test
     @Order(7)
+    @TestSecurity(user = "admin@example.com", roles = {"ADMIN"})
     void testDeleteIssue() {
-        Long issueId = createTestIssueViaAPI();
+        Long issueId = createTestIssueViaAPI(true);
 
         given()
                 .when()
@@ -243,6 +251,7 @@ class IssueResourceTest {
 
     @Test
     @Order(8)
+    @TestSecurity(user = "admin@example.com", roles = {"ADMIN"})
     void testDeleteIssueNotFound() {
         given()
                 .when()
@@ -254,7 +263,7 @@ class IssueResourceTest {
     @Test
     @Order(9)
     void testListIssuesByCategory() {
-        createTestIssueViaAPI();
+        createTestIssueViaAPI(false);
 
         given()
                 .when()
@@ -268,7 +277,7 @@ class IssueResourceTest {
     @Test
     @Order(10)
     void testListIssuesByStatus() {
-        createTestIssueViaAPI();
+        createTestIssueViaAPI(false);
 
         given()
                 .when()
@@ -282,7 +291,7 @@ class IssueResourceTest {
     @Test
     @Order(11)
     void testListIssuesBySeverity() {
-        createTestIssueViaAPI();
+        createTestIssueViaAPI(false);
 
         given()
                 .when()
@@ -295,22 +304,60 @@ class IssueResourceTest {
 
     @Test
     @Order(12)
+    @TestSecurity(user = "admin@example.com", roles = {"ADMIN"})
     void testListIssuesByReporter() {
-        createTestIssueViaAPI();
+        Long adminId = createIssueInDatabaseForAdmin();
 
         given()
                 .when()
-                .get("/issues/reporter/" + userId)
+                .get("/issues/reporter/" + adminId)
                 .then()
                 .statusCode(200)
                 .body("$", hasSize(1))
-                .body("[0].reporter.id", equalTo(userId.intValue()));
+                .body("[0].anonymous", Matchers.equalTo(false))
+                .body("[0].reporter", nullValue()); //we don't pass user info with Issue
+    }
+
+    @Transactional
+    Long createIssueInDatabaseForAdmin() {
+
+        User admin = new User();
+        admin.phone = "11888888888";
+        admin.password = "admin123";
+        admin.email = "admin@example.com";
+        admin.role = Roles.ADMIN;
+        admin.persist();
+
+        Issue issue = new Issue();
+        issue.reporter = admin;
+        issue.description = "Buraco grande na rua";
+        issue.severity = Severity.findById(severityHighId);
+        issue.status = Status.findById(statusOpenId);
+        issue.category = Category.findById(categoryId);
+        issue.confirmIssue = 0;
+        issue.anonymous = false;
+
+        Address address = new Address();
+        address.latitude = -23.5505;
+        address.longitude = -46.6333;
+        address.cep = "12236-420";
+        address.street = "Rua Joana Soares Ferreira";
+        address.number = "662";
+        address.neighborhood = "Cidade Morumbi";
+        address.city = "São José dos Campos";
+        address.state = "SP";
+        address.persist();
+
+        issue.address = address;
+        issue.persist();
+
+        return admin.id;
     }
 
     @Test
     @Order(13)
     void testConfirmIssue() {
-        Long issueId = createTestIssueViaAPI();
+        Long issueId = createTestIssueViaAPI(false);
         given()
                 .contentType(ContentType.JSON)
                 .when()
@@ -323,7 +370,7 @@ class IssueResourceTest {
     @Test
     @Order(14)
     void testListIssuesByAddressWithCity() {
-        createTestIssueViaAPI();
+        createTestIssueViaAPI(false);
 
         given()
                 .queryParam("city", "São José dos Campos")
@@ -338,7 +385,7 @@ class IssueResourceTest {
     @Test
     @Order(15)
     void testListIssuesByAddressWithState() {
-        createTestIssueViaAPI();
+        createTestIssueViaAPI(false);
 
         given()
                 .queryParam("state", "SP")
@@ -353,7 +400,7 @@ class IssueResourceTest {
     @Test
     @Order(16)
     void testListIssuesByAddressWithNeighborhood() {
-        createTestIssueViaAPI();
+        createTestIssueViaAPI(false);
 
         given()
                 .queryParam("neighborhood", "Cidade Morumbi")
@@ -368,7 +415,7 @@ class IssueResourceTest {
     @Test
     @Order(17)
     void testListIssuesByAddressWithCityAndState() {
-        createTestIssueViaAPI();
+        createTestIssueViaAPI(false);
 
         given()
                 .queryParam("city", "São José dos Campos")
@@ -385,7 +432,7 @@ class IssueResourceTest {
     @Test
     @Order(18)
     void testListIssuesByAddressWithCityAndNeighborhood() {
-        createTestIssueViaAPI();
+        createTestIssueViaAPI(false);
 
         given()
                 .queryParam("city", "São José dos Campos")
@@ -402,7 +449,7 @@ class IssueResourceTest {
     @Test
     @Order(19)
     void testListIssuesByAddressWithStateAndNeighborhood() {
-        createTestIssueViaAPI();
+        createTestIssueViaAPI(false);
 
         given()
                 .queryParam("state", "SP")
@@ -419,7 +466,7 @@ class IssueResourceTest {
     @Test
     @Order(20)
     void testListIssuesByAddressWithAllParameters() {
-        createTestIssueViaAPI();
+        createTestIssueViaAPI(false);
 
         given()
                 .queryParam("city", "São José dos Campos")
@@ -438,7 +485,7 @@ class IssueResourceTest {
     @Test
     @Order(21)
     void testListIssuesByAddressNotFound() {
-        createTestIssueViaAPI();
+        createTestIssueViaAPI(false);
 
         given()
                 .queryParam("city", "Rio de Janeiro")
@@ -476,7 +523,7 @@ class IssueResourceTest {
     @Transactional
     void testListIssuesByAddressMultipleResults() {
         // Create first issue
-        createTestIssueViaAPI();
+        createTestIssueViaAPI(false);
 
         // Create second issue with same city but different neighborhood
         String secondIssueJson = String.format("""
@@ -528,7 +575,48 @@ class IssueResourceTest {
                 .body("[0].address.neighborhood", equalTo("Centro"));
     }
 
-    Long createTestIssueViaAPI() {
+    @Test
+    @Order(25)
+    public void testCreateAnonymousIssue() {
+        String issueJson = String.format("""
+            {
+                "description": "Buraco grande na rua",
+                "severity": {"id": %d},
+                "status": {"id": %d},
+                "confirmIssue": 0,
+                "category": {"id": %d},
+                "address": {
+                     "latitude": -23.5505,
+                     "longitude": -46.6333,
+                     "cep": "12236-420",
+                     "street": "Rua Joana Soares Ferreira",
+                     "number": "662",
+                     "neighborhood": "Cidade Morumbi",
+                     "city": "São José dos Campos",
+                     "state": "SP"
+                }
+            }
+            """, severityHighId, statusOpenId, categoryId);
+
+        Integer id = given()
+                .contentType(ContentType.JSON)
+                .body(issueJson)
+                .when()
+                .post("/issues")
+                .then()
+                .statusCode(201)
+                .body("description", equalTo("Buraco grande na rua"))
+                .body("severity.name", equalTo("Alto"))
+                .body("status.name", equalTo("Aberto"))
+                .body("confirmIssue", equalTo(0))
+                .body("anonymous", Matchers.equalTo(true))
+                .body("id", notNullValue())
+                .extract()
+                .path("id");
+        createdIssueId = id.longValue();
+    }
+
+    Long createTestIssueViaAPI(boolean isAdmin) {
         String issueJson = String.format("""
             {
                 "description": "Buraco grande na rua",
@@ -548,7 +636,7 @@ class IssueResourceTest {
                      "state": "SP"
                 }
             }
-            """, severityHighId, statusOpenId, categoryId, userId);
+            """, severityHighId, statusOpenId, categoryId, isAdmin ? adminId : userId);
 
         Integer id = given()
                 .contentType(ContentType.JSON)

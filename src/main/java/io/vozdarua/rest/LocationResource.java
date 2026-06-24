@@ -5,6 +5,7 @@ import io.vozdarua.controller.restclient.BrazilApiClient;
 import io.vozdarua.model.dto.ErrorResource;
 import io.vozdarua.model.messages.AppMessages;
 import io.smallrye.mutiny.Uni;
+import jakarta.annotation.security.PermitAll;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -26,6 +27,7 @@ public class LocationResource {
     AppMessages appMessages;
 
     @GET
+    @PermitAll
     @Path("/cep/{cep}")
     public Uni<Response> findByCep(@PathParam("cep") String cep) {
         return brazilClient.findByCep(cep)

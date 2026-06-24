@@ -1,9 +1,9 @@
 package io.vozdarua.model.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -15,7 +15,12 @@ public class User extends PanacheEntity {
 
     @Column(unique = true)
     public String phone;
+
+    @Email
+    @Column(unique = true)
+    public String email;
     public String password;
+    public String role;
 
     @CreationTimestamp
     @Column(updatable = false)

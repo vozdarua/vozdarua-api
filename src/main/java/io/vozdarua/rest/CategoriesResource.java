@@ -5,6 +5,7 @@ import io.vozdarua.model.dto.ErrorResource;
 import io.vozdarua.model.entity.Category;
 import io.vozdarua.model.messages.AppMessages;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
+import jakarta.annotation.security.PermitAll;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
@@ -25,6 +26,7 @@ public class CategoriesResource {
     AppMessages appMessages;
 
     @GET
+    @PermitAll
     public Response list() {
         List<PanacheEntityBase> categories = Category.listAll();
 

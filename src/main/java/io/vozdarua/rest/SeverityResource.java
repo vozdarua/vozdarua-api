@@ -4,6 +4,7 @@ import io.vozdarua.config.RequestLocale;
 import io.vozdarua.model.dto.ErrorResource;
 import io.vozdarua.model.entity.Severity;
 import io.vozdarua.model.messages.AppMessages;
+import jakarta.annotation.security.PermitAll;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
@@ -24,6 +25,7 @@ public class SeverityResource {
     AppMessages appMessages;
 
     @GET
+    @PermitAll
     public Response list() {
         List<Severity> statuses = Severity.listAll();
 

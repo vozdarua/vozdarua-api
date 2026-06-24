@@ -1,5 +1,6 @@
 package io.vozdarua.model.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -34,7 +35,8 @@ public class Issue extends PanacheEntity {
     public Image photo;
 
     @ManyToOne
-    @JoinColumn(name = "reporter_id")
+    @JsonIgnore
+    @JoinColumn(name = "reporter_id", updatable = false)
     public User reporter;
 
     @ManyToOne(cascade = CascadeType.ALL)
@@ -47,22 +49,6 @@ public class Issue extends PanacheEntity {
 
     @UpdateTimestamp
     private Instant updatedAt;
-
-    public Status getStatus() {
-        return status;
-    }
-
-    public void setStatus(Status status) {
-        this.status = status;
-    }
-
-    public Severity getSeverity() {
-        return severity;
-    }
-
-    public void setSeverity(Severity severity) {
-        this.severity = severity;
-    }
 
     public static Issue findByIdWithCategoryAndTags(Long id) {
         return Issue.find("SELECT i FROM Issue i LEFT JOIN FETCH i.category c LEFT JOIN FETCH c.tags WHERE i.id = ?1", id).firstResult();

@@ -37,8 +37,7 @@ class UserResourceTest {
                 .then()
                 .statusCode(201)
                 .body("id", notNullValue())
-                .body("phone", equalTo("11999999999"))
-                .body("password", equalTo("test123"));
+                .body("phone", equalTo("11999999999"));
     }
 
     @Test
@@ -59,8 +58,7 @@ class UserResourceTest {
                 .then()
                 .statusCode(201)
                 .body("id", notNullValue())
-                .body("phone", equalTo("11988888888"))
-                .body("password", equalTo("test456"));
+                .body("phone", equalTo("11988888888"));
     }
 
     @Test
@@ -81,8 +79,7 @@ class UserResourceTest {
                 .then()
                 .statusCode(201)
                 .body("id", notNullValue())
-                .body("phone", equalTo("11977777777"))
-                .body("password", equalTo("test789"));
+                .body("phone", equalTo("11977777777"));
     }
 
     @Test

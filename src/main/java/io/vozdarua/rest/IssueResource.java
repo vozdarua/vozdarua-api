@@ -6,12 +6,16 @@ import io.vozdarua.model.dto.ImageUploadForm;
 import io.vozdarua.model.entity.*;
 import io.vozdarua.model.messages.AppMessages;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
+import jakarta.annotation.security.PermitAll;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.SecurityContext;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -40,10 +44,11 @@ public class IssueResource {
     String publicR2Url;
 
     @ConfigProperty(name= "cloudflare.r2.folder-name")
-    private String folderName;
+    String folderName;
 
     @GET
-    public Response listAll() {
+    @PermitAll
+    public Response list() {
         List<Issue> issues = Issue.listAll();
         if(issues.isEmpty()) {
             return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResource(appMessages.issue_not_found())).build();
@@ -52,6 +57,7 @@ public class IssueResource {
     }
 
     @PUT
+    @PermitAll
     @Transactional
     @Path("confirm/{id}")
     public Response confirmIssue(@PathParam("id") Long id) {
@@ -67,6 +73,7 @@ public class IssueResource {
     }
 
     @GET
+    @PermitAll
     @Path("/{id}")
     public Response getById(@PathParam("id") Long id) {
         Issue issue = Issue.findById(id);
@@ -77,17 +84,20 @@ public class IssueResource {
     }
 
     @POST
+    @PermitAll
     @Transactional
-    public Response create(@Valid Issue issue) {
+    public Response create(@Valid Issue issue, @Context SecurityContext securityContext) {
+        if(Objects.nonNull(securityContext.getUserPrincipal())) {
+            String email = securityContext.getUserPrincipal().getName();
+            User reporter = User.<User>find("email", email).singleResultOptional().orElse(null);
 
-        if(Objects.isNull(issue.reporter.id)) {
-            return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResource(appMessages.user_required())).build();
-        }
+            if(Objects.nonNull(reporter)) {
+                issue.reporter = reporter;
+            }
 
-        User reporter = User.findById(issue.reporter.id);
-
-        if(Objects.isNull(reporter)) {
-            return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResource(appMessages.user_not_found())).build();
+            if(Objects.nonNull(issue.reporter)) {
+                issue.reporter.persist();
+            }
         }
 
         // Load Severity from database
@@ -108,7 +118,7 @@ public class IssueResource {
             issue.status = status;
         }
 
-        issue.reporter = reporter;
+        issue.anonymous =  Objects.isNull(issue.reporter);
         issue.persist();
         return Response.status(Response.Status.CREATED).entity(issue).build();
     }
@@ -116,10 +126,18 @@ public class IssueResource {
     @PUT
     @Path("/{id}")
     @Transactional
-    public Response update(@PathParam("id") Long id, @Valid Issue updatedIssue) {
+    @RolesAllowed({Roles.USER, Roles.ADMIN})
+    public Response update(@PathParam("id") Long id, @Valid Issue updatedIssue, @Context SecurityContext securityContext) {
         Issue issue = Issue.findById(id);
         if (issue == null) {
             return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResource(appMessages.issue_not_found())).build();
+        }
+
+        String email = securityContext.getUserPrincipal().getName();
+        User reporter = User.<User>find("email", email).singleResultOptional().orElse(null);
+
+        if(Objects.isNull(reporter) || !reporter.email.equals(issue.reporter.email)) {
+            return Response.status(Response.Status.NOT_ACCEPTABLE).entity(new ErrorResource(appMessages.edit_other_user_issue())).build();
         }
 
         issue.description = updatedIssue.description;
@@ -153,6 +171,7 @@ public class IssueResource {
     @DELETE
     @Path("/{id}")
     @Transactional
+    @RolesAllowed({Roles.ADMIN})
     public Response delete(@PathParam("id") Long id) {
         Issue issue = Issue.findById(id);
         if (issue == null) {
@@ -163,6 +182,7 @@ public class IssueResource {
     }
 
     @GET
+    @PermitAll
     @Path("/category/{categoryId}")
     public Response listByCategory(@PathParam("categoryId") Long categoryId) {
         List<Issue> issues = Issue.list("category.id", categoryId);
@@ -173,6 +193,7 @@ public class IssueResource {
     }
 
     @GET
+    @PermitAll
     @Path("/status/{statusId}")
     public Response listByStatus(@PathParam("statusId") Long statusId) {
         List<Issue> issues = Issue.list("status.id", statusId);
@@ -183,6 +204,7 @@ public class IssueResource {
     }
 
     @GET
+    @PermitAll
     @Path("/severity/{severityId}")
     public Response listBySeverity(@PathParam("severityId") Long severityId) {
         List<Issue> issues = Issue.list("severity.id", severityId);
@@ -193,6 +215,7 @@ public class IssueResource {
     }
 
     @GET
+    @RolesAllowed({Roles.ADMIN})
     @Path("/reporter/{reporterId}")
     public Response listByReporter(@PathParam("reporterId") Long reporterId) {
         List<Issue> issues = Issue.list("reporter.id", reporterId);
@@ -203,6 +226,7 @@ public class IssueResource {
     }
 
     @GET
+    @PermitAll
     @Path("/address")
     public Response listByAddress(
             @QueryParam("city") String cityName,
@@ -219,7 +243,7 @@ public class IssueResource {
         }
 
         if (state != null && !state.isEmpty()) {
-            if (queryBuilder.length() > 0) {
+            if (!queryBuilder.isEmpty()) {
                 queryBuilder.append(" and ");
             }
             queryBuilder.append("address.state = ?").append(++paramIndex);
@@ -227,14 +251,14 @@ public class IssueResource {
         }
 
         if (neighborhood != null && !neighborhood.isEmpty()) {
-            if (queryBuilder.length() > 0) {
+            if (!queryBuilder.isEmpty()) {
                 queryBuilder.append(" and ");
             }
             queryBuilder.append("address.neighborhood = ?").append(++paramIndex);
             params[paramIndex - 1] = neighborhood;
         }
 
-        if (queryBuilder.length() == 0) {
+        if (queryBuilder.isEmpty()) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(new ErrorResource(appMessages.address_parameters_required()))
                     .build();
@@ -249,14 +273,16 @@ public class IssueResource {
                     .entity(new ErrorResource(appMessages.no_issues_found_for_address()))
                     .build();
         }
+
         return Response.ok(issues).build();
     }
 
     @POST
+    @PermitAll
+    @Transactional
     @Path("/image/upload")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
-    @Transactional
     public Response uploadToR2(ImageUploadForm form) {
 
         if (Objects.isNull(form.file) || form.file.size() == 0) {

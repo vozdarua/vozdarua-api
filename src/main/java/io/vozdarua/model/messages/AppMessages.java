@@ -65,4 +65,7 @@ public interface AppMessages {
 
     @Message
     String not_valid_image();
+
+    @Message
+    String edit_other_user_issue();
 }
