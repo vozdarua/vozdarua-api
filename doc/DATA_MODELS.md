@@ -37,15 +37,18 @@ Esta documentação descreve as entidades e estruturas de dados utilizadas pela 
   },
   "category": {
     "id": 1,
-    "name": "Infraestrutura"
+    "name": "Infraestrutura",
+    "icon": "construction"
   },
   "severity": {
     "id": 3,
-    "name": "Alta"
+    "name": "Alta",
+    "icon": "error"
   },
   "status": {
     "id": 1,
-    "name": "Pendente"
+    "name": "Pendente",
+    "icon": "schedule"
   }
 }
 ```
@@ -120,7 +123,9 @@ Esta documentação descreve as entidades e estruturas de dados utilizadas pela 
 {
   "id": 1,
   "name": "Infraestrutura",
-  "description": "Problemas relacionados a ruas, calçadas, pontes e estruturas urbanas"
+  "icon": "construction",
+  "description": "Problemas relacionados a ruas, calçadas, pontes e estruturas urbanas",
+  "tags": ["buraco", "calçada", "asfalto", "ponte"]
 }
 ```
 
@@ -129,8 +134,10 @@ Esta documentação descreve as entidades e estruturas de dados utilizadas pela 
 | Campo | Tipo | Obrigatório | Descrição |
 |-------|------|-------------|-----------|
 | `id` | Long | Auto | Identificador único da categoria |
-| `name` | String | Sim | Nome da categoria |
-| `description` | String | Não | Descrição detalhada da categoria |
+| `name` | String | Sim | Nome da categoria (único) |
+| `icon` | String | Não | Nome do ícone para exibição no frontend |
+| `description` | String | Não | Descrição detalhada da categoria (máx. 500 caracteres) |
+| `tags` | List<String> | Não | Lista de palavras-chave associadas à categoria |
 
 ### Exemplos de Categorias
 
@@ -156,7 +163,7 @@ Esta documentação descreve as entidades e estruturas de dados utilizadas pela 
 {
   "id": 1,
   "name": "Pendente",
-  "description": "Aguardando análise pela prefeitura"
+  "icon": "schedule"
 }
 ```
 
@@ -165,8 +172,8 @@ Esta documentação descreve as entidades e estruturas de dados utilizadas pela 
 | Campo | Tipo | Obrigatório | Descrição |
 |-------|------|-------------|-----------|
 | `id` | Long | Auto | Identificador único do status |
-| `name` | String | Sim | Nome do status |
-| `description` | String | Não | Descrição do significado do status |
+| `name` | String | Sim | Nome do status (único) |
+| `icon` | String | Não | Nome do ícone para exibição no frontend |
 
 ### Ciclo de Vida Típico
 
@@ -199,8 +206,7 @@ Pendente → Em Análise → Em Andamento → Resolvida → Fechada
 {
   "id": 3,
   "name": "Alta",
-  "description": "Problema que requer atenção urgente",
-  "priority": 3
+  "icon": "error"
 }
 ```
 
@@ -209,9 +215,8 @@ Pendente → Em Análise → Em Andamento → Resolvida → Fechada
 | Campo | Tipo | Obrigatório | Descrição |
 |-------|------|-------------|-----------|
 | `id` | Long | Auto | Identificador único da severidade |
-| `name` | String | Sim | Nome do nível de severidade |
-| `description` | String | Não | Descrição do nível |
-| `priority` | Integer | Não | Ordem de prioridade (maior = mais urgente) |
+| `name` | String | Sim | Nome do nível de severidade (único) |
+| `icon` | String | Não | Nome do ícone para exibição no frontend |
 
 ### Níveis de Severidade
 
@@ -381,15 +386,18 @@ FiscalizaiUser (1) ─────< (N) Issue
   },
   "category": {
     "id": 1,
-    "name": "Infraestrutura"
+    "name": "Infraestrutura",
+    "icon": "construction"
   },
   "severity": {
     "id": 3,
-    "name": "Alta"
+    "name": "Alta",
+    "icon": "error"
   },
   "status": {
     "id": 1,
-    "name": "Pendente"
+    "name": "Pendente",
+    "icon": "schedule"
   }
 }
 ```

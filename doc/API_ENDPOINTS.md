@@ -296,28 +296,140 @@ curl -X POST http://localhost:8080/issues/image/upload \
 
 **Base Path**: `/user`
 
-**Descrição**: Gerencia os usuários do sistema (cidadãos que reportam ocorrências).
+**Descrição**: Gerencia os usuários do sistema (cidadãos que reportam ocorrências). Inclui cadastro, atualização, exclusão e consulta de perfil.
 
 **Tradução**: Usuários/Cidadãos cadastrados
 
-### 2.1. Criar Usuário
+### 2.1. Criar Usuário (Signup)
 
 ```
 POST /user
 ```
 
-**Descrição**: Cadastra um novo usuário no sistema.
+**Descrição**: Cadastra um novo usuário no sistema. Não requer autenticação.
+
+**Autenticação**: Não requerida (PermitAll)
 
 **Body (JSON)**:
 ```json
 {
   "name": "João Silva",
   "email": "joao.silva@example.com",
+  "phone": "+55 11 98765-4321",
+  "password": "senha123"
+}
+```
+
+**Campos Obrigatórios**:
+- `email` - Email único do usuário
+- `password` - Senha do usuário
+
+**Resposta de Sucesso**: `201 CREATED`
+```json
+{
+  "id": 1,
+  "name": "João Silva",
+  "email": "joao.silva@example.com",
   "phone": "+55 11 98765-4321"
 }
 ```
 
+**Observação**: A senha não é retornada na resposta por segurança. O objeto retornado é um UserDTO.
+
+---
+
+### 2.2. Buscar Perfil do Usuário Autenticado
+
+```
+GET /user/me
+```
+
+**Descrição**: Retorna os dados do usuário atualmente autenticado.
+
+**Autenticação**: Requerida (Roles: USER ou ADMIN)
+
+**Resposta de Sucesso**: `200 OK`
+```json
+{
+  "id": 1,
+  "name": "João Silva",
+  "email": "joao.silva@example.com",
+  "phone": "+55 11 98765-4321"
+}
+```
+
+**Respostas de Erro**:
+- `401 UNAUTHORIZED` - Usuário não autenticado
+
+---
+
+### 2.3. Atualizar Usuário
+
+```
+PUT /user/{id}
+```
+
+**Parâmetros**:
+- `id` (path) - ID do usuário
+
+**Descrição**: Atualiza os dados de um usuário. O usuário só pode atualizar seus próprios dados, exceto se for ADMIN.
+
+**Autenticação**: Requerida (Roles: USER ou ADMIN)
+
+**Regras de Autorização**:
+- Usuários comuns só podem atualizar seus próprios dados
+- ADMINs podem atualizar qualquer usuário
+
+**Body (JSON)**:
+```json
+{
+  "name": "João Silva Santos",
+  "email": "joao.santos@example.com",
+  "phone": "+55 11 91234-5678",
+  "password": "novaSenha456"
+}
+```
+
 **Resposta de Sucesso**: `201 CREATED`
+```json
+{
+  "id": 1,
+  "name": "João Silva Santos",
+  "email": "joao.santos@example.com",
+  "phone": "+55 11 91234-5678"
+}
+```
+
+**Respostas de Erro**:
+- `400 BAD REQUEST` - Usuário tentando atualizar outro usuário sem ser ADMIN
+- `401 UNAUTHORIZED` - Usuário não autenticado
+- `404 NOT FOUND` - Usuário não encontrado
+
+---
+
+### 2.4. Excluir Usuário
+
+```
+DELETE /user/{id}
+```
+
+**Parâmetros**:
+- `id` (path) - ID do usuário
+
+**Descrição**: Remove permanentemente um usuário do sistema. O usuário só pode excluir sua própria conta, exceto se for ADMIN.
+
+**Autenticação**: Requerida (Roles: USER ou ADMIN)
+
+**Regras de Autorização**:
+- Usuários comuns só podem excluir sua própria conta
+- ADMINs podem excluir qualquer usuário
+
+**Resposta de Sucesso**: `204 NO CONTENT`
+
+**Respostas de Erro**:
+- `400 BAD REQUEST` - Usuário tentando excluir outro usuário sem ser ADMIN
+- `401 UNAUTHORIZED` - Usuário não autenticado
+- `404 NOT FOUND` - Usuário não encontrado
 
 ---
 
@@ -325,7 +437,7 @@ POST /user
 
 **Base Path**: `/categories`
 
-**Descrição**: Fornece a lista de categorias disponíveis para classificação de ocorrências (ex: Infraestrutura, Limpeza Urbana, Iluminação Pública).
+**Descrição**: Gerencia as categorias de problemas urbanos. Permite listar, criar, atualizar e excluir categorias. Operações de modificação requerem permissão de ADMIN.
 
 **Tradução**: Categorias de problemas urbanos
 
@@ -337,25 +449,126 @@ GET /categories
 
 **Descrição**: Retorna todas as categorias disponíveis no sistema.
 
+**Autenticação**: Não requerida (PermitAll)
+
 **Resposta de Sucesso**: `200 OK`
 ```json
 [
   {
     "id": 1,
-    "name": "Infraestrutura"
+    "name": "Infraestrutura",
+    "icon": "construction",
+    "description": "Problemas relacionados à infraestrutura urbana",
+    "tags": ["buraco", "calçada", "asfalto"]
   },
   {
     "id": 2,
-    "name": "Iluminação Pública"
-  },
-  {
-    "id": 3,
-    "name": "Limpeza Urbana"
+    "name": "Iluminação Pública",
+    "icon": "lightbulb",
+    "description": "Problemas com iluminação de ruas e espaços públicos",
+    "tags": ["poste", "lâmpada"]
   }
 ]
 ```
 
 **Resposta de Erro**: `404 NOT FOUND`
+```json
+{
+  "message": "Nenhuma categoria encontrada"
+}
+```
+
+---
+
+### 3.2. Buscar Categoria por ID
+
+```
+GET /categories/{id}
+```
+
+**Parâmetros**:
+- `id` (path) - ID da categoria
+
+**Descrição**: Retorna os detalhes de uma categoria específica.
+
+**Autenticação**: Não requerida (PermitAll)
+
+**Resposta de Sucesso**: `200 OK`
+**Resposta de Erro**: `404 NOT FOUND`
+
+---
+
+### 3.3. Criar Nova Categoria
+
+```
+POST /categories
+```
+
+**Descrição**: Cria uma nova categoria no sistema.
+
+**Autenticação**: Requerida (Role: ADMIN)
+
+**Body (JSON)**:
+```json
+{
+  "name": "Saneamento",
+  "icon": "water_drop",
+  "description": "Problemas relacionados a água e esgoto",
+  "tags": ["esgoto", "água", "vazamento"]
+}
+```
+
+**Campos Obrigatórios**:
+- `name` - Nome da categoria
+
+**Resposta de Sucesso**: `201 CREATED`
+**Respostas de Erro**:
+- `401 UNAUTHORIZED` - Usuário não autenticado
+- `403 FORBIDDEN` - Usuário não possui role ADMIN
+
+---
+
+### 3.4. Atualizar Categoria
+
+```
+PUT /categories/{id}
+```
+
+**Parâmetros**:
+- `id` (path) - ID da categoria
+
+**Descrição**: Atualiza os dados de uma categoria existente.
+
+**Autenticação**: Requerida (Role: ADMIN)
+
+**Body (JSON)**: Mesma estrutura do POST
+
+**Resposta de Sucesso**: `201 CREATED`
+**Respostas de Erro**:
+- `401 UNAUTHORIZED` - Usuário não autenticado
+- `403 FORBIDDEN` - Usuário não possui role ADMIN
+- `404 NOT FOUND` - Categoria não encontrada
+
+---
+
+### 3.5. Excluir Categoria
+
+```
+DELETE /categories/{id}
+```
+
+**Parâmetros**:
+- `id` (path) - ID da categoria
+
+**Descrição**: Remove permanentemente uma categoria do sistema.
+
+**Autenticação**: Requerida (Role: ADMIN)
+
+**Resposta de Sucesso**: `204 NO CONTENT`
+**Respostas de Erro**:
+- `401 UNAUTHORIZED` - Usuário não autenticado
+- `403 FORBIDDEN` - Usuário não possui role ADMIN
+- `404 NOT FOUND` - Categoria não encontrada
 
 ---
 
@@ -363,7 +576,7 @@ GET /categories
 
 **Base Path**: `/status`
 
-**Descrição**: Fornece a lista de status possíveis para uma ocorrência (ex: Pendente, Em Análise, Resolvida).
+**Descrição**: Gerencia os status possíveis para as ocorrências. Permite listar, criar, atualizar e excluir status. Operações de modificação requerem permissão de ADMIN.
 
 **Tradução**: Status/Estado da ocorrência
 
@@ -375,25 +588,125 @@ GET /status
 
 **Descrição**: Retorna todos os status disponíveis no sistema.
 
+**Autenticação**: Não requerida (PermitAll)
+
 **Resposta de Sucesso**: `200 OK`
 ```json
 [
   {
     "id": 1,
-    "name": "Pendente"
+    "name": "Pendente",
+    "icon": "schedule"
   },
   {
     "id": 2,
-    "name": "Em Análise"
+    "name": "Em Análise",
+    "icon": "search"
   },
   {
     "id": 3,
-    "name": "Resolvida"
+    "name": "Resolvida",
+    "icon": "check_circle"
   }
 ]
 ```
 
 **Resposta de Erro**: `404 NOT FOUND`
+```json
+{
+  "message": "Nenhum status encontrado"
+}
+```
+
+---
+
+### 4.2. Buscar Status por ID
+
+```
+GET /status/{id}
+```
+
+**Parâmetros**:
+- `id` (path) - ID do status
+
+**Descrição**: Retorna os detalhes de um status específico.
+
+**Autenticação**: Não requerida (PermitAll)
+
+**Resposta de Sucesso**: `200 OK`
+**Resposta de Erro**: `404 NOT FOUND`
+
+---
+
+### 4.3. Criar Novo Status
+
+```
+POST /status
+```
+
+**Descrição**: Cria um novo status no sistema.
+
+**Autenticação**: Requerida (Role: ADMIN)
+
+**Body (JSON)**:
+```json
+{
+  "name": "Cancelada",
+  "icon": "cancel"
+}
+```
+
+**Campos Obrigatórios**:
+- `name` - Nome do status
+
+**Resposta de Sucesso**: `201 CREATED`
+**Respostas de Erro**:
+- `401 UNAUTHORIZED` - Usuário não autenticado
+- `403 FORBIDDEN` - Usuário não possui role ADMIN
+
+---
+
+### 4.4. Atualizar Status
+
+```
+PUT /status/{id}
+```
+
+**Parâmetros**:
+- `id` (path) - ID do status
+
+**Descrição**: Atualiza os dados de um status existente.
+
+**Autenticação**: Requerida (Role: ADMIN)
+
+**Body (JSON)**: Mesma estrutura do POST
+
+**Resposta de Sucesso**: `201 CREATED`
+**Respostas de Erro**:
+- `401 UNAUTHORIZED` - Usuário não autenticado
+- `403 FORBIDDEN` - Usuário não possui role ADMIN
+- `404 NOT FOUND` - Status não encontrado
+
+---
+
+### 4.5. Excluir Status
+
+```
+DELETE /status/{id}
+```
+
+**Parâmetros**:
+- `id` (path) - ID do status
+
+**Descrição**: Remove permanentemente um status do sistema.
+
+**Autenticação**: Requerida (Role: ADMIN)
+
+**Resposta de Sucesso**: `204 NO CONTENT`
+**Respostas de Erro**:
+- `401 UNAUTHORIZED` - Usuário não autenticado
+- `403 FORBIDDEN` - Usuário não possui role ADMIN
+- `404 NOT FOUND` - Status não encontrado
 
 ---
 
@@ -401,7 +714,7 @@ GET /status
 
 **Base Path**: `/severity`
 
-**Descrição**: Fornece a lista de níveis de severidade para classificar a gravidade das ocorrências (ex: Baixa, Média, Alta, Crítica).
+**Descrição**: Gerencia os níveis de severidade das ocorrências. Permite listar, criar, atualizar e excluir severidades. Operações de modificação requerem permissão de ADMIN.
 
 **Tradução**: Severidade/Gravidade da ocorrência
 
@@ -413,29 +726,130 @@ GET /severity
 
 **Descrição**: Retorna todos os níveis de severidade disponíveis.
 
+**Autenticação**: Não requerida (PermitAll)
+
 **Resposta de Sucesso**: `200 OK`
 ```json
 [
   {
     "id": 1,
-    "name": "Baixa"
+    "name": "Baixa",
+    "icon": "info"
   },
   {
     "id": 2,
-    "name": "Média"
+    "name": "Média",
+    "icon": "warning"
   },
   {
     "id": 3,
-    "name": "Alta"
+    "name": "Alta",
+    "icon": "error"
   },
   {
     "id": 4,
-    "name": "Crítica"
+    "name": "Crítica",
+    "icon": "dangerous"
   }
 ]
 ```
 
 **Resposta de Erro**: `404 NOT FOUND`
+```json
+{
+  "message": "Nenhuma severidade encontrada"
+}
+```
+
+---
+
+### 5.2. Buscar Severidade por ID
+
+```
+GET /severity/{id}
+```
+
+**Parâmetros**:
+- `id` (path) - ID da severidade
+
+**Descrição**: Retorna os detalhes de uma severidade específica.
+
+**Autenticação**: Não requerida (PermitAll)
+
+**Resposta de Sucesso**: `200 OK`
+**Resposta de Erro**: `404 NOT FOUND`
+
+---
+
+### 5.3. Criar Nova Severidade
+
+```
+POST /severity
+```
+
+**Descrição**: Cria uma nova severidade no sistema.
+
+**Autenticação**: Requerida (Role: ADMIN)
+
+**Body (JSON)**:
+```json
+{
+  "name": "Urgente",
+  "icon": "priority_high"
+}
+```
+
+**Campos Obrigatórios**:
+- `name` - Nome da severidade
+
+**Resposta de Sucesso**: `201 CREATED`
+**Respostas de Erro**:
+- `401 UNAUTHORIZED` - Usuário não autenticado
+- `403 FORBIDDEN` - Usuário não possui role ADMIN
+
+---
+
+### 5.4. Atualizar Severidade
+
+```
+PUT /severity/{id}
+```
+
+**Parâmetros**:
+- `id` (path) - ID da severidade
+
+**Descrição**: Atualiza os dados de uma severidade existente.
+
+**Autenticação**: Requerida (Role: ADMIN)
+
+**Body (JSON)**: Mesma estrutura do POST
+
+**Resposta de Sucesso**: `201 CREATED`
+**Respostas de Erro**:
+- `401 UNAUTHORIZED` - Usuário não autenticado
+- `403 FORBIDDEN` - Usuário não possui role ADMIN
+- `404 NOT FOUND` - Severidade não encontrada
+
+---
+
+### 5.5. Excluir Severidade
+
+```
+DELETE /severity/{id}
+```
+
+**Parâmetros**:
+- `id` (path) - ID da severidade
+
+**Descrição**: Remove permanentemente uma severidade do sistema.
+
+**Autenticação**: Requerida (Role: ADMIN)
+
+**Resposta de Sucesso**: `204 NO CONTENT`
+**Respostas de Erro**:
+- `401 UNAUTHORIZED` - Usuário não autenticado
+- `403 FORBIDDEN` - Usuário não possui role ADMIN
+- `404 NOT FOUND` - Severidade não encontrada
 
 ---
 
@@ -510,11 +924,46 @@ A interface Swagger permite:
 
 ## Notas Importantes
 
-### Autenticação
-Atualmente a API não possui autenticação implementada. Em produção, recomenda-se adicionar:
-- JWT (JSON Web Tokens)
-- OAuth 2.0
-- API Keys
+### Autenticação e Autorização
+
+A API utiliza autenticação baseada em roles (RBAC - Role-Based Access Control) com dois níveis de permissão:
+
+**Roles Disponíveis**:
+- `USER` - Usuário comum que pode reportar e gerenciar suas próprias ocorrências
+- `ADMIN` - Administrador com permissões completas no sistema
+
+**Endpoints Públicos** (não requerem autenticação):
+- `GET /categories` - Listar categorias
+- `GET /categories/{id}` - Buscar categoria por ID
+- `GET /severity` - Listar severidades
+- `GET /severity/{id}` - Buscar severidade por ID
+- `GET /status` - Listar status
+- `GET /status/{id}` - Buscar status por ID
+- `GET /location/cep/{cep}` - Buscar endereço por CEP
+- `POST /user` - Criar novo usuário (signup)
+
+**Endpoints que Requerem Autenticação USER ou ADMIN**:
+- `GET /user/me` - Buscar perfil próprio
+- `PUT /user/{id}` - Atualizar usuário (próprio ou qualquer se ADMIN)
+- `DELETE /user/{id}` - Excluir usuário (próprio ou qualquer se ADMIN)
+- Todos os endpoints de `/issues` (criar, atualizar, excluir ocorrências)
+
+**Endpoints Exclusivos para ADMIN**:
+- `POST /categories` - Criar categoria
+- `PUT /categories/{id}` - Atualizar categoria
+- `DELETE /categories/{id}` - Excluir categoria
+- `POST /severity` - Criar severidade
+- `PUT /severity/{id}` - Atualizar severidade
+- `DELETE /severity/{id}` - Excluir severidade
+- `POST /status` - Criar status
+- `PUT /status/{id}` - Atualizar status
+- `DELETE /status/{id}` - Excluir status
+
+**Códigos de Resposta de Autenticação**:
+- `401 UNAUTHORIZED` - Usuário não autenticado (sem token ou token inválido)
+- `403 FORBIDDEN` - Usuário autenticado mas sem permissão para a operação (role insuficiente)
+
+**Observação**: A implementação da autenticação utiliza o SecurityContext do Jakarta EE para gerenciar sessões e verificar roles
 
 ### Internacionalização
 A API suporta múltiplos idiomas através do header `Accept-Language`:
