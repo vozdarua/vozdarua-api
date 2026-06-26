@@ -34,9 +34,15 @@ public class LocationResource {
     public Response findByCep(@PathParam("cep") String cep) {
         CepLocation dto = brazilClient.findByCep(cep);
         State state = State.find("uf", dto.state()).firstResult();
-        dto.withState(state.name);
         return Response.ok(dto.withState(state.name)).build();
 
+    }
+
+    @GET
+    @PermitAll
+    @Path("/states/")
+    public Response states() {
+        return Response.ok(State.findAll().list()).build();
     }
 
 }
