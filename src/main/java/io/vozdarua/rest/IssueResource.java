@@ -127,6 +127,8 @@ public class IssueResource {
             issue.photo = photo;
         }
 
+        issue.anonymous = Objects.isNull(issue.reporter) || Objects.isNull(issue.reporter.id);
+
         if(issue.anonymous) {
             issue.reporter = null;
         }
