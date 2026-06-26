@@ -118,6 +118,15 @@ public class IssueResource {
             issue.status = status;
         }
 
+        // Load Image from database
+        if(Objects.nonNull(issue.photo) && Objects.nonNull(issue.photo.id)) {
+            Image photo = Image.findById(issue.photo.id);
+            if(Objects.isNull(photo)) {
+                return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResource("Image not found")).build();
+            }
+            issue.photo = photo;
+        }
+
         issue.anonymous =  Objects.isNull(issue.reporter);
         issue.persist();
         return Response.status(Response.Status.CREATED).entity(issue).build();
