@@ -315,7 +315,7 @@ class IssueResourceTest {
                 .statusCode(200)
                 .body("$", hasSize(1))
                 .body("[0].anonymous", Matchers.equalTo(false))
-                .body("[0].reporter", nullValue()); //we don't pass user info with Issue
+                .body("[0].reporter", notNullValue());
     }
 
     @Transactional
