@@ -2,6 +2,7 @@ package io.vozdarua.model.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
+import io.quarkus.resteasy.reactive.jackson.SecureField;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -35,7 +36,7 @@ public class Issue extends PanacheEntity {
     public Image photo;
 
     @ManyToOne
-    @JsonIgnore
+    @SecureField(rolesAllowed = Roles.ADMIN)
     @JoinColumn(name = "reporter_id", updatable = false)
     public User reporter;
 

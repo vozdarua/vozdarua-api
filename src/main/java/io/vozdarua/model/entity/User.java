@@ -2,6 +2,7 @@ package io.vozdarua.model.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
+import io.quarkus.resteasy.reactive.jackson.SecureField;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import org.hibernate.annotations.CreationTimestamp;
@@ -19,6 +20,8 @@ public class User extends PanacheEntity {
     @Email
     @Column(unique = true)
     public String email;
+
+    @SecureField(rolesAllowed = Roles.ADMIN)
     public String password;
     public String role;
 
