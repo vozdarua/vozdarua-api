@@ -127,7 +127,10 @@ public class IssueResource {
             issue.photo = photo;
         }
 
-        issue.anonymous =  Objects.isNull(issue.reporter);
+        if(issue.anonymous) {
+            issue.reporter = null;
+        }
+
         issue.persist();
         return Response.status(Response.Status.CREATED).entity(issue).build();
     }
