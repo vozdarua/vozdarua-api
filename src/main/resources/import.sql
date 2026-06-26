@@ -128,4 +128,4 @@ INSERT INTO state (id, name, uf, createdAt, updatedAt) VALUES (26, 'Goiás', 'GO
 INSERT INTO state (id, name, uf, createdAt, updatedAt) VALUES (27, 'Distrito Federal', 'DF','2026-06-16 00:00:00', '2026-06-16 00:00:00');
 
 -- Reset sequence for Status
-ALTER SEQUENCE state_seq, RESTART WITH 28
+ALTER SEQUENCE state_seq, RESTART WITH 28;
