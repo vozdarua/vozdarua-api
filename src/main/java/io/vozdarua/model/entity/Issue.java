@@ -37,7 +37,7 @@ public class Issue extends PanacheEntity {
 
     @ManyToOne
     @SecureField(rolesAllowed = Roles.ADMIN)
-    @JoinColumn(name = "reporter_id", updatable = false)
+    @JoinColumn(name = "reporter_id", updatable = false, nullable = true)
     public User reporter;
 
     @ManyToOne(cascade = CascadeType.ALL)
