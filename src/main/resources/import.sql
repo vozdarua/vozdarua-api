@@ -96,3 +96,36 @@ INSERT INTO Status (id, name, icon, createdAt, updatedAt) VALUES (4, 'Aberto', '
 
 -- Reset sequence for Status
 ALTER SEQUENCE status_seq RESTART WITH 5;
+
+-- Insert States
+
+INSERT INTO state (id, name, uf, createdAt, updatedAt) VALUES (1, 'Rondônia', 'RO','2026-06-16 00:00:00', '2026-06-16 00:00:00');
+INSERT INTO state (id, name, uf, createdAt, updatedAt) VALUES (2, 'Acre', 'AC','2026-06-16 00:00:00', '2026-06-16 00:00:00');
+INSERT INTO state (id, name, uf, createdAt, updatedAt) VALUES (3, 'Amazonas', 'AM','2026-06-16 00:00:00', '2026-06-16 00:00:00');
+INSERT INTO state (id, name, uf, createdAt, updatedAt) VALUES (4, 'Roraima', 'RR','2026-06-16 00:00:00', '2026-06-16 00:00:00');
+INSERT INTO state (id, name, uf, createdAt, updatedAt) VALUES (5, 'Pará', 'PA','2026-06-16 00:00:00', '2026-06-16 00:00:00');
+INSERT INTO state (id, name, uf, createdAt, updatedAt) VALUES (6, 'Amapá', 'AP','2026-06-16 00:00:00', '2026-06-16 00:00:00');
+INSERT INTO state (id, name, uf, createdAt, updatedAt) VALUES (7, 'Tocantins', 'TO','2026-06-16 00:00:00', '2026-06-16 00:00:00');
+INSERT INTO state (id, name, uf, createdAt, updatedAt) VALUES (8, 'Maranhão', 'MA','2026-06-16 00:00:00', '2026-06-16 00:00:00');
+INSERT INTO state (id, name, uf, createdAt, updatedAt) VALUES (9, 'Piauí', 'PI','2026-06-16 00:00:00', '2026-06-16 00:00:00');
+INSERT INTO state (id, name, uf, createdAt, updatedAt) VALUES (10, 'Ceará', 'CE','2026-06-16 00:00:00', '2026-06-16 00:00:00');
+INSERT INTO state (id, name, uf, createdAt, updatedAt) VALUES (11, 'Rio Grande do Norte', 'RN','2026-06-16 00:00:00', '2026-06-16 00:00:00');
+INSERT INTO state (id, name, uf, createdAt, updatedAt) VALUES (12, 'Paraíba', 'PB','2026-06-16 00:00:00', '2026-06-16 00:00:00');
+INSERT INTO state (id, name, uf, createdAt, updatedAt) VALUES (13, 'Pernambuco', 'PE','2026-06-16 00:00:00', '2026-06-16 00:00:00');
+INSERT INTO state (id, name, uf, createdAt, updatedAt) VALUES (14, 'Alagoas', 'AL','2026-06-16 00:00:00', '2026-06-16 00:00:00');
+INSERT INTO state (id, name, uf, createdAt, updatedAt) VALUES (15, 'Sergipe', 'SE','2026-06-16 00:00:00', '2026-06-16 00:00:00');
+INSERT INTO state (id, name, uf, createdAt, updatedAt) VALUES (16, 'Bahia', 'BA','2026-06-16 00:00:00', '2026-06-16 00:00:00');
+INSERT INTO state (id, name, uf, createdAt, updatedAt) VALUES (17, 'Minas Gerais', 'MG','2026-06-16 00:00:00', '2026-06-16 00:00:00');
+INSERT INTO state (id, name, uf, createdAt, updatedAt) VALUES (18, 'Espírito Santo', 'ES','2026-06-16 00:00:00', '2026-06-16 00:00:00');
+INSERT INTO state (id, name, uf, createdAt, updatedAt) VALUES (19, 'Rio de Janeiro', 'RJ','2026-06-16 00:00:00', '2026-06-16 00:00:00');
+INSERT INTO state (id, name, uf, createdAt, updatedAt) VALUES (20, 'São Paulo', 'SP','2026-06-16 00:00:00', '2026-06-16 00:00:00');
+INSERT INTO state (id, name, uf, createdAt, updatedAt) VALUES (21, 'Paraná', 'PR','2026-06-16 00:00:00', '2026-06-16 00:00:00');
+INSERT INTO state (id, name, uf, createdAt, updatedAt) VALUES (22, 'Santa Catarina', 'SC','2026-06-16 00:00:00', '2026-06-16 00:00:00');
+INSERT INTO state (id, name, uf, createdAt, updatedAt) VALUES (23, 'Rio Grande do Sul', 'RS','2026-06-16 00:00:00', '2026-06-16 00:00:00');
+INSERT INTO state (id, name, uf, createdAt, updatedAt) VALUES (24, 'Mato Grosso do Sul', 'MS','2026-06-16 00:00:00', '2026-06-16 00:00:00');
+INSERT INTO state (id, name, uf, createdAt, updatedAt) VALUES (25, 'Mato Grosso', 'MT','2026-06-16 00:00:00', '2026-06-16 00:00:00');
+INSERT INTO state (id, name, uf, createdAt, updatedAt) VALUES (26, 'Goiás', 'GO','2026-06-16 00:00:00', '2026-06-16 00:00:00');
+INSERT INTO state (id, name, uf, createdAt, updatedAt VALUES (27, 'Distrito Federal', 'DF','2026-06-16 00:00:00', '2026-06-16 00:00:00');
+
+-- Reset sequence for Status
+ALTER SEQUENCE status_seq RESTART WITH 28;

@@ -2,7 +2,9 @@ package io.vozdarua.rest;
 
 import io.vozdarua.config.RequestLocale;
 import io.vozdarua.controller.restclient.BrazilApiClient;
+import io.vozdarua.model.dto.CepLocation;
 import io.vozdarua.model.dto.ErrorResource;
+import io.vozdarua.model.entity.State;
 import io.vozdarua.model.messages.AppMessages;
 import io.smallrye.mutiny.Uni;
 import jakarta.annotation.security.PermitAll;
@@ -29,20 +31,11 @@ public class LocationResource {
     @GET
     @PermitAll
     @Path("/cep/{cep}")
-    public Uni<Response> findByCep(@PathParam("cep") String cep) {
-        return brazilClient.findByCep(cep)
-                .map(dto -> Response.ok(dto).build())
-                .onFailure().recoverWithItem(failure -> {
-                    if (failure instanceof WebApplicationException webEx) {
-                        int status = webEx.getResponse().getStatus();
-                        return Response.status(status)
-                                .entity(new ErrorResource(appMessages.cep_not_found(cep)))
-                                .build();
-                    }
-                    return Response.status(Response.Status.BAD_GATEWAY)
-                            .entity(new ErrorResource(appMessages.cep_service_unavailable()))
-                            .build();
-                });
+    public Response findByCep(@PathParam("cep") String cep) {
+        CepLocation dto = brazilClient.findByCep(cep);
+        State state = State.find("uf", dto.state()).firstResult();
+        dto.withState(state.name);
+        return Response.ok(dto.withState(state.name)).build();
 
     }
 

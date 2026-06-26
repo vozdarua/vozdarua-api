@@ -12,6 +12,6 @@ public interface BrazilApiClient {
 
     @GET
     @Path("/{cep}")
-    Uni<CepLocation> findByCep(@PathParam("cep") String cep);
+    CepLocation findByCep(@PathParam("cep") String cep);
 
 }
