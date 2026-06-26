@@ -95,7 +95,7 @@ public class IssueResource {
                 issue.reporter = reporter;
             }
 
-            if(Objects.nonNull(issue.reporter)) {
+            if(Objects.nonNull(issue.reporter) && !issue.anonymous) {
                 issue.reporter.persist();
             }
         }
