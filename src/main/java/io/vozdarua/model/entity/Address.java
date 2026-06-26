@@ -20,9 +20,7 @@ public class Address extends PanacheEntity {
     @Column(nullable = false)
     public Double longitude;
 
-    @Column(length = 2)
     public String state;
-
     public String city;
     public String neighborhood;
     public String street;
