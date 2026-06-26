@@ -103,7 +103,7 @@ INSERT INTO vozdaruauser (id, email, password, phone, role) VALUES (1, 'admin@em
 -- Reset sequence for Status
 ALTER SEQUENCE status_seq RESTART WITH 2;
 
-- Insert States
+-- Insert States
 
 INSERT INTO state (id, name, uf, createdAt, updatedAt) VALUES (1, 'Rondônia', 'RO','2026-06-16 00:00:00', '2026-06-16 00:00:00');
 INSERT INTO state (id, name, uf, createdAt, updatedAt) VALUES (2, 'Acre', 'AC','2026-06-16 00:00:00', '2026-06-16 00:00:00');
@@ -133,5 +133,5 @@ INSERT INTO state (id, name, uf, createdAt, updatedAt) VALUES (25, 'Mato Grosso'
 INSERT INTO state (id, name, uf, createdAt, updatedAt) VALUES (26, 'Goiás', 'GO','2026-06-16 00:00:00', '2026-06-16 00:00:00');
 INSERT INTO state (id, name, uf, createdAt, updatedAt) VALUES (27, 'Distrito Federal', 'DF','2026-06-16 00:00:00', '2026-06-16 00:00:00');
 
--- Reset sequence for Status
-ALTER SEQUENCE status_seq RESTART WITH 28;
+-- Reset sequence for State
+ALTER SEQUENCE state_seq RESTART WITH 28;
