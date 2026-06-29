@@ -68,4 +68,7 @@ public interface AppMessages {
 
     @Message
     String edit_other_user_issue();
+
+    @Message
+    String coordenates_not_found();
 }

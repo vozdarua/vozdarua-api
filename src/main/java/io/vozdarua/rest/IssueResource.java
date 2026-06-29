@@ -1,7 +1,9 @@
 package io.vozdarua.rest;
 
 import io.vozdarua.config.RequestLocale;
+import io.vozdarua.controller.restclient.GeocodingClient;
 import io.vozdarua.model.dto.ErrorResource;
+import io.vozdarua.model.dto.GeoResponse;
 import io.vozdarua.model.dto.ImageUploadForm;
 import io.vozdarua.model.entity.*;
 import io.vozdarua.model.messages.AppMessages;
@@ -17,12 +19,14 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.SecurityContext;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 @Path("/issues")
@@ -45,6 +49,10 @@ public class IssueResource {
 
     @ConfigProperty(name= "cloudflare.r2.folder-name")
     String folderName;
+
+    @Inject
+    @RestClient
+    GeocodingClient geocodingClient;
 
     @GET
     @PermitAll
@@ -98,6 +106,16 @@ public class IssueResource {
             if(Objects.nonNull(issue.reporter) && !issue.anonymous) {
                 issue.reporter.persist();
             }
+        }
+
+        if(Objects.isNull(issue.address.latitude) || Objects.isNull(issue.address.longitude)) {
+            Optional<GeoResponse> geoResponse = getGeoResponse(issue.address);
+            if(geoResponse.isEmpty()) {
+                return Response.noContent().entity(new ErrorResource(appMessages.coordenates_not_found())).build();
+            }
+
+            issue.address.latitude = Double.parseDouble(geoResponse.get().lat());
+            issue.address.longitude = Double.parseDouble(geoResponse.get().lon());
         }
 
         // Load Severity from database
@@ -334,5 +352,13 @@ public class IssueResource {
         } catch (Exception e) {
             return Response.serverError().entity(new ErrorResource(appMessages.r2_upload_file(e.getMessage()))).build();
         }
+    }
+
+    private Optional<GeoResponse> getGeoResponse(Address address) {
+        List<GeoResponse> responses = geocodingClient.getCoordinates(address.toString(), "json", "MyQuarkusApp/1.0");
+        if (responses != null && !responses.isEmpty()) {
+            return Optional.of(responses.getFirst());
+        }
+        return Optional.empty();
     }
 }

@@ -2,8 +2,10 @@ package io.vozdarua.rest;
 
 import io.vozdarua.config.RequestLocale;
 import io.vozdarua.controller.restclient.BrazilApiClient;
+import io.vozdarua.controller.restclient.GeocodingClient;
 import io.vozdarua.model.dto.CepLocation;
 import io.vozdarua.model.dto.ErrorResource;
+import io.vozdarua.model.dto.GeoResponse;
 import io.vozdarua.model.entity.State;
 import io.vozdarua.model.messages.AppMessages;
 import io.smallrye.mutiny.Uni;
@@ -15,6 +17,8 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 import jakarta.inject.Inject;
 
+import java.util.List;
+
 @Path("/location")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -23,6 +27,10 @@ public class LocationResource {
     @Inject
     @RestClient
     BrazilApiClient brazilClient;
+
+    @Inject
+    @RestClient
+    GeocodingClient geocodingClient;
 
     @Inject
     @RequestLocale
@@ -44,5 +52,25 @@ public class LocationResource {
     public Response states() {
         return Response.ok(State.findAll().list()).build();
     }
+
+    @GET
+    @Path("/coordenate/")
+    public Response getLatLongfromAddress(@QueryParam("address") String address) {
+
+        List<GeoResponse> responses = geocodingClient.getCoordinates(address, "json", "MyQuarkusApp/1.0");
+
+        if (responses != null && !responses.isEmpty()) {
+            GeoResponse firstMatch = responses.get(0);
+
+            double latitude = Double.parseDouble(firstMatch.lat());
+            double longitude = Double.parseDouble(firstMatch.lon());
+
+            return Response.ok(firstMatch).build();
+        } else {
+            return Response.noContent().entity("No coordinates found for this address.").build();
+        }
+
+    }
+
 
 }

@@ -34,4 +34,8 @@ public class Address extends PanacheEntity {
     @UpdateTimestamp
     private Instant updatedAt;
 
+    @Override
+    public String toString() {
+        return street + ", " + neighborhood + ", " + city + ", " + state + ", " + cep + ", Brazil";
+    }
 }

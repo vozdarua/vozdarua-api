@@ -23,7 +23,7 @@ public class Issue extends PanacheEntity {
     @JoinColumn(name = "status_id")
     public Status status;
 
-    public Integer confirmIssue;
+    public Integer confirmIssue = 0;
 
     public boolean anonymous;
 
