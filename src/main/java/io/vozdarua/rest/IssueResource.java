@@ -5,6 +5,7 @@ import io.vozdarua.controller.restclient.GeocodingClient;
 import io.vozdarua.model.dto.ErrorResource;
 import io.vozdarua.model.dto.GeoResponse;
 import io.vozdarua.model.dto.ImageUploadForm;
+import io.vozdarua.model.dto.UserDTO;
 import io.vozdarua.model.entity.*;
 import io.vozdarua.model.messages.AppMessages;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
@@ -366,6 +367,16 @@ public class IssueResource {
         } catch (Exception e) {
             return Response.serverError().entity(new ErrorResource(appMessages.r2_upload_file(e.getMessage()))).build();
         }
+    }
+
+    @GET
+    @PermitAll
+    @Path("/ranking")
+    public Response ranking() {
+        List<UserDTO> ranking = Issue.rankingByReporter().stream()
+            .map(row -> new UserDTO((Long) row[0], (String) row[1], (String) row[2], (String) row[3], (Long) row[4]))
+            .toList();
+        return Response.ok(ranking).build();
     }
 
     private Optional<GeoResponse> getGeoResponse(Address address) {

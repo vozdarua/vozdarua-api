@@ -8,6 +8,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
+import java.util.List;
 
 @Entity
 public class Issue extends PanacheEntity {
@@ -57,5 +58,11 @@ public class Issue extends PanacheEntity {
 
     public static Issue findByIdWithStatus(Long id) {
         return Issue.find("SELECT i FROM Issue i LEFT JOIN FETCH i.status s WHERE i.id = ?1", id).firstResult();
+    }
+
+    public static List<Object[]> rankingByReporter() {
+        return getEntityManager()
+            .createQuery("SELECT i.reporter.id, i.reporter.phone, i.reporter.email, i.reporter.role, COUNT(i) FROM Issue i WHERE i.reporter IS NOT NULL GROUP BY i.reporter.id, i.reporter.phone, i.reporter.email, i.reporter.role ORDER BY COUNT(i) DESC", Object[].class)
+            .getResultList();
     }
 }

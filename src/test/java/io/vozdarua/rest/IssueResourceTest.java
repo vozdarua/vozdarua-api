@@ -636,6 +636,66 @@ class IssueResourceTest {
                 .body("status.name", equalTo("Resolvido"));
     }
 
+    @Test
+    @Order(27)
+    void testRanking() {
+        // Create 3 issues for regular user
+        createTestIssueViaAPI(false);
+        createTestIssueViaAPI(false);
+        createTestIssueViaAPI(false);
+
+        // Create 2 issues for admin in database
+        Long adminId = createTwoIssuesForAdmin();
+
+        given()
+                .when()
+                .get("/issues/ranking")
+                .then()
+                .statusCode(200)
+                .body("$", hasSize(2))
+                .body("[0].issueCount", equalTo(3))
+                .body("[0].email", equalTo("test@example.com"))
+                .body("[1].issueCount", equalTo(2))
+                .body("[1].email", equalTo("admin2@example.com"));
+    }
+
+    @Transactional
+    Long createTwoIssuesForAdmin() {
+        User admin = new User();
+        admin.phone = "11888888888";
+        admin.password = "admin123";
+        admin.email = "admin2@example.com";
+        admin.role = Roles.ADMIN;
+        admin.persist();
+
+        for (int i = 0; i < 2; i++) {
+            Issue issue = new Issue();
+            issue.reporter = admin;
+            issue.description = "Admin issue " + i;
+            issue.severity = Severity.findById(severityHighId);
+            issue.status = Status.findById(statusOpenId);
+            issue.category = Category.findById(categoryId);
+            issue.confirmIssue = 0;
+            issue.anonymous = false;
+
+            Address address = new Address();
+            address.latitude = -23.5505;
+            address.longitude = -46.6333;
+            address.cep = "12236-420";
+            address.street = "Rua Admin";
+            address.number = "200";
+            address.neighborhood = "Admin";
+            address.city = "Admin City";
+            address.state = "SP";
+            address.persist();
+
+            issue.address = address;
+            issue.persist();
+        }
+
+        return admin.id;
+    }
+
     Long createTestIssueViaAPI(boolean isAdmin) {
         String issueJson = String.format("""
             {
