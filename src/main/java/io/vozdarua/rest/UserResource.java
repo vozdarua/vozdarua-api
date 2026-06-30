@@ -62,11 +62,7 @@ public class UserResource {
         if(!user.email.equals(email) && !isAdmin) {
             return Response.status(Response.Status.BAD_REQUEST).build();
         }
-
-        if(User.findByEmailOrPhone(updatedUser.email, updatedUser.phone).isPresent()) {
-            return Response.status(Response.Status.BAD_REQUEST).entity(appMessages.user_exists()).build();
-        }
-
+        
         user.phone = updatedUser.phone;
         user.email = updatedUser.email;
         user.password = updatedUser.password;

@@ -24,6 +24,7 @@ class IssueResourceTest {
     private Long severityMediumId;
     private Long statusOpenId;
     private Long statusAnalyzingId;
+    private Long statusResolvedId;
 
     @BeforeEach
     @Transactional
@@ -57,6 +58,11 @@ class IssueResourceTest {
         statusAnalyzing.name = "Em análise";
         statusAnalyzing.persist();
         statusAnalyzingId = statusAnalyzing.id;
+
+        Status statusResolved = new Status();
+        statusResolved.name = "Resolvido";
+        statusResolved.persist();
+        statusResolvedId = statusResolved.id;
 
         // Create test category
         Category category = new Category();
@@ -361,7 +367,7 @@ class IssueResourceTest {
         given()
                 .contentType(ContentType.JSON)
                 .when()
-                .put("/issues/confirm/" + issueId)
+                .put("/issues/" + issueId + "/confirm/")
                 .then()
                 .statusCode(200)
                 .body("confirmIssue", equalTo(1));
@@ -614,6 +620,20 @@ class IssueResourceTest {
                 .extract()
                 .path("id");
         createdIssueId = id.longValue();
+    }
+
+    @Test
+    @Order(26)
+    void testResolveIssue() {
+        Long issueId = createTestIssueViaAPI(false);
+        given()
+                .contentType(ContentType.JSON)
+                .when()
+                .put("/issues/" + issueId + "/resolve/")
+                .then()
+                .statusCode(200)
+                .body("status.id", equalTo(statusResolvedId.intValue()))
+                .body("status.name", equalTo("Resolvido"));
     }
 
     Long createTestIssueViaAPI(boolean isAdmin) {

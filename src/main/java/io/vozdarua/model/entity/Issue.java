@@ -19,7 +19,7 @@ public class Issue extends PanacheEntity {
     @JoinColumn(name = "severity_id")
     public Severity severity;
 
-    @ManyToOne
+    @ManyToOne()
     @JoinColumn(name = "status_id")
     public Status status;
 
@@ -53,5 +53,9 @@ public class Issue extends PanacheEntity {
 
     public static Issue findByIdWithCategoryAndTags(Long id) {
         return Issue.find("SELECT i FROM Issue i LEFT JOIN FETCH i.category c LEFT JOIN FETCH c.tags WHERE i.id = ?1", id).firstResult();
+    }
+
+    public static Issue findByIdWithStatus(Long id) {
+        return Issue.find("SELECT i FROM Issue i LEFT JOIN FETCH i.status s WHERE i.id = ?1", id).firstResult();
     }
 }

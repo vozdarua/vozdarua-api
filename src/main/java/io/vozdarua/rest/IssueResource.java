@@ -91,7 +91,6 @@ public class IssueResource {
             return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResource(appMessages.issue_not_found())).build();
         }
         issue.status = Status.find("name", "Resolvido").firstResult();
-        issue.persist();
         return Response.ok(issue).build();
     }
 
