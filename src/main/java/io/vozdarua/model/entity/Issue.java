@@ -62,7 +62,7 @@ public class Issue extends PanacheEntity {
 
     public static List<Object[]> rankingByReporter() {
         return getEntityManager()
-            .createQuery("SELECT i.reporter.id, i.reporter.phone, i.reporter.email, i.reporter.role, COUNT(i) FROM Issue i WHERE i.reporter IS NOT NULL GROUP BY i.reporter.id, i.reporter.phone, i.reporter.email, i.reporter.role ORDER BY COUNT(i) DESC", Object[].class)
+            .createQuery("SELECT i.reporter.id, i.reporter.phone, i.reporter.email, i.reporter.role, COUNT(i) FROM Issue i WHERE i.reporter IS NOT NULL GROUP BY i.reporter.id, i.reporter.phone, i.reporter.email, i.reporter.role ORDER BY COUNT(i) DESC LIMIT 5", Object[].class)
             .getResultList();
     }
 }
