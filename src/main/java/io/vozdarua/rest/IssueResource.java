@@ -8,6 +8,7 @@ import io.vozdarua.model.dto.ImageUploadForm;
 import io.vozdarua.model.entity.*;
 import io.vozdarua.model.messages.AppMessages;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
+import io.vozdarua.utils.VozDaRuaUtils;
 import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
@@ -67,7 +68,7 @@ public class IssueResource {
     @PUT
     @PermitAll
     @Transactional
-    @Path("confirm/{id}")
+    @Path("{id}/confirm")
     public Response confirmIssue(@PathParam("id") Long id) {
         Issue issue = Issue.findByIdWithCategoryAndTags(id);
         if(Objects.isNull(issue)) {
@@ -77,6 +78,20 @@ public class IssueResource {
         issue.confirmIssue = issue.confirmIssue + 1;
         issue.persist();
 
+        return Response.ok(issue).build();
+    }
+
+    @PUT
+    @PermitAll
+    @Transactional
+    @Path("{id}/resolve")
+    public Response resolveIssue(@PathParam("id") Long id) {
+        Issue issue = Issue.findById(id);
+        if(Objects.isNull(issue)) {
+            return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResource(appMessages.issue_not_found())).build();
+        }
+        issue.status = Status.find("name", "Resolvido").firstResult();
+        issue.persist();
         return Response.ok(issue).build();
     }
 
@@ -172,12 +187,12 @@ public class IssueResource {
             return Response.status(Response.Status.NOT_ACCEPTABLE).entity(new ErrorResource(appMessages.edit_other_user_issue())).build();
         }
 
-        issue.description = updatedIssue.description;
-        issue.confirmIssue = updatedIssue.confirmIssue;
-        issue.category = updatedIssue.category;
-        issue.photo = updatedIssue.photo;
-        issue.reporter = updatedIssue.reporter;
-        issue.address = updatedIssue.address;
+        issue.description = VozDaRuaUtils.verifyNull(issue.description, updatedIssue.description);
+        issue.confirmIssue = VozDaRuaUtils.verifyNull(issue.confirmIssue, updatedIssue.confirmIssue);
+        issue.category = VozDaRuaUtils.verifyNull(issue.category, updatedIssue.category);
+        issue.photo = VozDaRuaUtils.verifyNull(issue.photo, updatedIssue.photo);
+        issue.reporter = VozDaRuaUtils.verifyNull(issue.reporter, updatedIssue.reporter);;
+        issue.address = VozDaRuaUtils.verifyNull(issue.address, updatedIssue.address);;
 
         // Load Severity from database
         if(Objects.nonNull(updatedIssue.severity) && Objects.nonNull(updatedIssue.severity.id)) {

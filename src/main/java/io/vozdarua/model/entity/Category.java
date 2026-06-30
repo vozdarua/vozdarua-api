@@ -21,7 +21,7 @@ public class Category extends PanacheEntity {
     @Column(length = 500)
     public String description;
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "category_tags", joinColumns = @JoinColumn(name = "category_id"))
     @Column(name = "tag")
     public List<String> tags;
