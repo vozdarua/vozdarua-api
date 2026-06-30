@@ -71,4 +71,7 @@ public interface AppMessages {
 
     @Message
     String coordenates_not_found();
+
+    @Message
+    String user_exists();
 }

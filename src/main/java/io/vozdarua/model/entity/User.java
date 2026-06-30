@@ -9,6 +9,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
+import java.util.Optional;
 
 @Entity
 @Table(name = "vozdaruauser")
@@ -31,4 +32,8 @@ public class User extends PanacheEntity {
 
     @UpdateTimestamp
     private Instant updatedAt;
+
+    public static Optional<User> findByEmailOrPhone(String email, String phone) {
+        return find("lower(email) = lower(?1) or phone = ?2", email, phone).firstResultOptional();
+    }
 }

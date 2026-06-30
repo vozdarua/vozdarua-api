@@ -37,6 +37,11 @@ public class UserResource {
     @PermitAll
     @Transactional
     public Response create(@Valid User user) {
+
+        if(User.findByEmailOrPhone(user.email, user.phone).isPresent()) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(appMessages.user_exists()).build();
+        }
+
         accountService.signupUser(user);
         return Response.status(Response.Status.CREATED).entity(UserDTO.toUserDTO(user)).build();
     }
@@ -56,6 +61,10 @@ public class UserResource {
 
         if(!user.email.equals(email) && !isAdmin) {
             return Response.status(Response.Status.BAD_REQUEST).build();
+        }
+
+        if(User.findByEmailOrPhone(updatedUser.email, updatedUser.phone).isPresent()) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(appMessages.user_exists()).build();
         }
 
         user.phone = updatedUser.phone;
