@@ -74,4 +74,22 @@ public interface AppMessages {
 
     @Message
     String user_exists();
+
+    @Message
+    String expired_token();
+
+    @Message
+    String email_mandatory();
+
+    @Message
+    String token_limit_rate();
+
+    @Message
+    String recovery_email_sent();
+
+    @Message
+    String email_recovery_subject();
+
+    @Message
+    String email_recovery_text(String url);
 }

@@ -1,0 +1,63 @@
+package io.vozdarua.controller.service;
+
+import io.quarkus.mailer.Mail;
+import io.quarkus.mailer.reactive.ReactiveMailer;
+import io.vozdarua.config.RequestLocale;
+import io.vozdarua.model.dto.MessageResponse;
+import io.vozdarua.model.entity.PasswordResetToken;
+import io.vozdarua.model.entity.User;
+import io.vozdarua.model.messages.AppMessages;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
+import jakarta.ws.rs.core.Response;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+@ApplicationScoped
+public class PasswordRecoveryService {
+
+    @Inject
+    ReactiveMailer mailer;
+
+    @Inject
+    @RequestLocale
+    AppMessages appMessages;
+
+    @Transactional
+    public Response createRecoveryToken(String email) {
+        User user = User.find("email", email).firstResult();
+        if (user == null) {
+            return Response.status(Response.Status.BAD_REQUEST).build();
+        }
+
+        // Check if they already requested one recently
+        LocalDateTime cooldownLimit = LocalDateTime.now().minusMinutes(1);
+        if (user.lastResetRequest != null && user.lastResetRequest.isAfter(cooldownLimit)) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(new MessageResponse(appMessages.token_limit_rate())).build();
+        }
+
+        // Update the timestamp and proceed
+        user.lastResetRequest = LocalDateTime.now();
+        user.persist();
+
+        // Clean up any old tokens for this user
+        PasswordResetToken.delete("user", user);
+
+        // Generate a secure token
+        PasswordResetToken token = new PasswordResetToken();
+        token.token = UUID.randomUUID().toString();
+        token.user = user;
+        token.expiryDate = LocalDateTime.now().plusHours(1); // 1-hour validity
+        token.persist();
+
+        // Send Email
+        String resetUrl = "https://vozdarua.com.br/reset-password?token=" + token.token;
+        mailer.send(Mail.withText(email, appMessages.email_recovery_subject(),
+                appMessages.email_recovery_text(resetUrl))).subscribe().with(v -> {});
+
+        return Response.ok(new MessageResponse(appMessages.recovery_email_sent()))
+                .build();
+    }
+}

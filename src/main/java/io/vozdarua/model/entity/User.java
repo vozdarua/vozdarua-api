@@ -9,6 +9,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Entity
@@ -25,6 +26,8 @@ public class User extends PanacheEntity {
     @SecureField(rolesAllowed = Roles.ADMIN)
     public String password;
     public String role;
+
+    public LocalDateTime lastResetRequest;
 
     @CreationTimestamp
     @Column(updatable = false)

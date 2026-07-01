@@ -2,13 +2,12 @@ package io.vozdarua.rest;
 
 import io.vozdarua.config.RequestLocale;
 import io.vozdarua.controller.restclient.GeocodingClient;
-import io.vozdarua.model.dto.ErrorResource;
+import io.vozdarua.model.dto.MessageResponse;
 import io.vozdarua.model.dto.GeoResponse;
 import io.vozdarua.model.dto.ImageUploadForm;
 import io.vozdarua.model.dto.UserDTO;
 import io.vozdarua.model.entity.*;
 import io.vozdarua.model.messages.AppMessages;
-import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import io.vozdarua.utils.VozDaRuaUtils;
 import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
@@ -61,7 +60,7 @@ public class IssueResource {
     public Response list() {
         List<Issue> issues = Issue.listAll();
         if(issues.isEmpty()) {
-            return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResource(appMessages.issue_not_found())).build();
+            return Response.status(Response.Status.NOT_FOUND).entity(new MessageResponse(appMessages.issue_not_found())).build();
         }
         return Response.ok(Issue.listAll()).build();
     }
@@ -73,7 +72,7 @@ public class IssueResource {
     public Response confirmIssue(@PathParam("id") Long id) {
         Issue issue = Issue.findByIdWithCategoryAndTags(id);
         if(Objects.isNull(issue)) {
-            return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResource(appMessages.issue_not_found())).build();
+            return Response.status(Response.Status.NOT_FOUND).entity(new MessageResponse(appMessages.issue_not_found())).build();
         }
 
         issue.confirmIssue = issue.confirmIssue + 1;
@@ -89,7 +88,7 @@ public class IssueResource {
     public Response resolveIssue(@PathParam("id") Long id) {
         Issue issue = Issue.findById(id);
         if(Objects.isNull(issue)) {
-            return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResource(appMessages.issue_not_found())).build();
+            return Response.status(Response.Status.NOT_FOUND).entity(new MessageResponse(appMessages.issue_not_found())).build();
         }
         issue.status = Status.find("name", "Resolvido").firstResult();
         return Response.ok(issue).build();
@@ -101,7 +100,7 @@ public class IssueResource {
     public Response getById(@PathParam("id") Long id) {
         Issue issue = Issue.findById(id);
         if (issue == null) {
-            return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResource(appMessages.issue_not_found())).build();
+            return Response.status(Response.Status.NOT_FOUND).entity(new MessageResponse(appMessages.issue_not_found())).build();
         }
         return Response.ok(issue).build();
     }
@@ -126,7 +125,7 @@ public class IssueResource {
         if(Objects.isNull(issue.address.latitude) || Objects.isNull(issue.address.longitude)) {
             Optional<GeoResponse> geoResponse = getGeoResponse(issue.address);
             if(geoResponse.isEmpty()) {
-                return Response.noContent().entity(new ErrorResource(appMessages.coordenates_not_found())).build();
+                return Response.noContent().entity(new MessageResponse(appMessages.coordenates_not_found())).build();
             }
 
             issue.address.latitude = Double.parseDouble(geoResponse.get().lat());
@@ -137,7 +136,7 @@ public class IssueResource {
         if(Objects.nonNull(issue.severity) && Objects.nonNull(issue.severity.id)) {
             Severity severity = Severity.findById(issue.severity.id);
             if(Objects.isNull(severity)) {
-                return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResource(appMessages.severity_not_found())).build();
+                return Response.status(Response.Status.NOT_FOUND).entity(new MessageResponse(appMessages.severity_not_found())).build();
             }
             issue.severity = severity;
         }
@@ -146,7 +145,7 @@ public class IssueResource {
         if(Objects.nonNull(issue.status) && Objects.nonNull(issue.status.id)) {
             Status status = Status.findById(issue.status.id);
             if(Objects.isNull(status)) {
-                return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResource(appMessages.status_not_found())).build();
+                return Response.status(Response.Status.NOT_FOUND).entity(new MessageResponse(appMessages.status_not_found())).build();
             }
             issue.status = status;
         }
@@ -155,7 +154,7 @@ public class IssueResource {
         if(Objects.nonNull(issue.photo) && Objects.nonNull(issue.photo.id)) {
             Image photo = Image.findById(issue.photo.id);
             if(Objects.isNull(photo)) {
-                return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResource("Image not found")).build();
+                return Response.status(Response.Status.NOT_FOUND).entity(new MessageResponse("Image not found")).build();
             }
             issue.photo = photo;
         }
@@ -177,14 +176,14 @@ public class IssueResource {
     public Response update(@PathParam("id") Long id, @Valid Issue updatedIssue, @Context SecurityContext securityContext) {
         Issue issue = Issue.findById(id);
         if (issue == null) {
-            return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResource(appMessages.issue_not_found())).build();
+            return Response.status(Response.Status.NOT_FOUND).entity(new MessageResponse(appMessages.issue_not_found())).build();
         }
 
         String email = securityContext.getUserPrincipal().getName();
         User reporter = User.<User>find("email", email).singleResultOptional().orElse(null);
 
         if(Objects.isNull(reporter) || !reporter.email.equals(issue.reporter.email)) {
-            return Response.status(Response.Status.NOT_ACCEPTABLE).entity(new ErrorResource(appMessages.edit_other_user_issue())).build();
+            return Response.status(Response.Status.NOT_ACCEPTABLE).entity(new MessageResponse(appMessages.edit_other_user_issue())).build();
         }
 
         issue.description = VozDaRuaUtils.verifyNull(issue.description, updatedIssue.description);
@@ -198,7 +197,7 @@ public class IssueResource {
         if(Objects.nonNull(updatedIssue.severity) && Objects.nonNull(updatedIssue.severity.id)) {
             Severity severity = Severity.findById(updatedIssue.severity.id);
             if(Objects.isNull(severity)) {
-                return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResource(appMessages.severity_not_found())).build();
+                return Response.status(Response.Status.NOT_FOUND).entity(new MessageResponse(appMessages.severity_not_found())).build();
             }
             issue.severity = severity;
         }
@@ -207,7 +206,7 @@ public class IssueResource {
         if(Objects.nonNull(updatedIssue.status) && Objects.nonNull(updatedIssue.status.id)) {
             Status status = Status.findById(updatedIssue.status.id);
             if(Objects.isNull(status)) {
-                return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResource(appMessages.status_not_found())).build();
+                return Response.status(Response.Status.NOT_FOUND).entity(new MessageResponse(appMessages.status_not_found())).build();
             }
             issue.status = status;
         }
@@ -222,7 +221,7 @@ public class IssueResource {
     public Response delete(@PathParam("id") Long id) {
         Issue issue = Issue.findById(id);
         if (issue == null) {
-            return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResource(appMessages.issue_not_found())).build();
+            return Response.status(Response.Status.NOT_FOUND).entity(new MessageResponse(appMessages.issue_not_found())).build();
         }
         issue.delete();
         return Response.noContent().build();
@@ -234,7 +233,7 @@ public class IssueResource {
     public Response listByCategory(@PathParam("categoryId") Long categoryId) {
         List<Issue> issues = Issue.list("category.id", categoryId);
         if (issues.isEmpty()) {
-            return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResource(appMessages.no_issues_found_for_category())).build();
+            return Response.status(Response.Status.NOT_FOUND).entity(new MessageResponse(appMessages.no_issues_found_for_category())).build();
         }
         return Response.ok(issues).build();
     }
@@ -245,7 +244,7 @@ public class IssueResource {
     public Response listByStatus(@PathParam("statusId") Long statusId) {
         List<Issue> issues = Issue.list("status.id", statusId);
         if (issues.isEmpty()) {
-            return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResource(appMessages.no_issues_found_for_status())).build();
+            return Response.status(Response.Status.NOT_FOUND).entity(new MessageResponse(appMessages.no_issues_found_for_status())).build();
         }
         return Response.ok(issues).build();
     }
@@ -256,7 +255,7 @@ public class IssueResource {
     public Response listBySeverity(@PathParam("severityId") Long severityId) {
         List<Issue> issues = Issue.list("severity.id", severityId);
         if (issues.isEmpty()) {
-            return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResource(appMessages.no_issues_found_for_severity())).build();
+            return Response.status(Response.Status.NOT_FOUND).entity(new MessageResponse(appMessages.no_issues_found_for_severity())).build();
         }
         return Response.ok(issues).build();
     }
@@ -267,7 +266,7 @@ public class IssueResource {
     public Response listByReporter(@PathParam("reporterId") Long reporterId) {
         List<Issue> issues = Issue.list("reporter.id", reporterId);
         if (issues.isEmpty()) {
-            return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResource(appMessages.no_issues_found_for_reporter())).build();
+            return Response.status(Response.Status.NOT_FOUND).entity(new MessageResponse(appMessages.no_issues_found_for_reporter())).build();
         }
         return Response.ok(issues).build();
     }
@@ -307,7 +306,7 @@ public class IssueResource {
 
         if (queryBuilder.isEmpty()) {
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(new ErrorResource(appMessages.address_parameters_required()))
+                    .entity(new MessageResponse(appMessages.address_parameters_required()))
                     .build();
         }
 
@@ -317,7 +316,7 @@ public class IssueResource {
         List<Issue> issues = Issue.list(queryBuilder.toString(), actualParams);
         if (issues.isEmpty()) {
             return Response.status(Response.Status.NOT_FOUND)
-                    .entity(new ErrorResource(appMessages.no_issues_found_for_address()))
+                    .entity(new MessageResponse(appMessages.no_issues_found_for_address()))
                     .build();
         }
 
@@ -333,11 +332,11 @@ public class IssueResource {
     public Response uploadToR2(ImageUploadForm form) {
 
         if (Objects.isNull(form.file) || form.file.size() == 0) {
-            return Response.status(Response.Status.BAD_REQUEST).entity(new ErrorResource(appMessages.r2_missing_file())).build();
+            return Response.status(Response.Status.BAD_REQUEST).entity(new MessageResponse(appMessages.r2_missing_file())).build();
         }
 
         if (!form.file.contentType().startsWith("image/")) {
-            return Response.status(Response.Status.BAD_REQUEST).entity(new ErrorResource(appMessages.not_valid_image())).build();
+            return Response.status(Response.Status.BAD_REQUEST).entity(new MessageResponse(appMessages.not_valid_image())).build();
         }
 
         String name = UUID.randomUUID() + "-" + form.file.fileName();
@@ -365,7 +364,7 @@ public class IssueResource {
             return Response.ok(image).build();
 
         } catch (Exception e) {
-            return Response.serverError().entity(new ErrorResource(appMessages.r2_upload_file(e.getMessage()))).build();
+            return Response.serverError().entity(new MessageResponse(appMessages.r2_upload_file(e.getMessage()))).build();
         }
     }
 

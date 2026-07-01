@@ -1,8 +1,7 @@
 package io.vozdarua.rest;
 
 import io.vozdarua.config.RequestLocale;
-import io.vozdarua.model.dto.ErrorResource;
-import io.vozdarua.model.entity.Category;
+import io.vozdarua.model.dto.MessageResponse;
 import io.vozdarua.model.entity.Roles;
 import io.vozdarua.model.entity.Severity;
 import io.vozdarua.model.messages.AppMessages;
@@ -32,7 +31,7 @@ public class SeverityResource {
     public Response list() {
         List<Severity> statuses = Severity.listAll();
         if(statuses.isEmpty()) {
-            return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResource(appMessages.severities_not_found())).build();
+            return Response.status(Response.Status.NOT_FOUND).entity(new MessageResponse(appMessages.severities_not_found())).build();
         }
         return Response.ok(statuses).build();
     }
@@ -53,7 +52,7 @@ public class SeverityResource {
         Severity severity = Severity.findById(id);
 
         if(Objects.isNull(severity)) {
-            return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResource(appMessages.severity_not_found())).build();
+            return Response.status(Response.Status.NOT_FOUND).entity(new MessageResponse(appMessages.severity_not_found())).build();
         }
 
         severity.name = updatedSeverity.name;
@@ -70,7 +69,7 @@ public class SeverityResource {
     public Response delete(@PathParam("id") Long id) {
         Severity severity = Severity.findById(id);
         if(Objects.isNull(severity)) {
-            return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResource(appMessages.severity_not_found())).build();
+            return Response.status(Response.Status.NOT_FOUND).entity(new MessageResponse(appMessages.severity_not_found())).build();
         }
         severity.delete();
         return  Response.noContent().build();
@@ -82,7 +81,7 @@ public class SeverityResource {
     public Response getById(@PathParam("id") Long id) {
         Severity severity = Severity.findById(id);
         if (severity == null) {
-            return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResource(appMessages.severity_not_found())).build();
+            return Response.status(Response.Status.NOT_FOUND).entity(new MessageResponse(appMessages.severity_not_found())).build();
         }
         return Response.ok(severity).build();
     }

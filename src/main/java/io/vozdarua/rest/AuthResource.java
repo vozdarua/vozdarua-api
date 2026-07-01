@@ -1,15 +1,18 @@
 package io.vozdarua.rest;
 
 import io.quarkus.elytron.security.common.BcryptUtil;
+import io.vozdarua.config.RequestLocale;
 import io.vozdarua.controller.service.AuthService;
+import io.vozdarua.controller.service.PasswordRecoveryService;
 import io.vozdarua.model.dto.AuthRequest;
+import io.vozdarua.model.dto.MessageResponse;
+import io.vozdarua.model.entity.PasswordResetToken;
 import io.vozdarua.model.entity.User;
+import io.vozdarua.model.messages.AppMessages;
 import jakarta.annotation.security.PermitAll;
 import jakarta.inject.Inject;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
+import jakarta.transaction.Transactional;
+import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
@@ -22,6 +25,13 @@ public class AuthResource {
 
     @Inject
     AuthService accountService;
+
+    @Inject
+    PasswordRecoveryService passwordRecoveryService;
+
+    @Inject
+    @RequestLocale
+    AppMessages appMessages;
 
     @POST
     @PermitAll
@@ -39,5 +49,39 @@ public class AuthResource {
         }
 
         return Response.status(Response.Status.UNAUTHORIZED).build();
+    }
+
+    @PUT
+    @Transactional
+    @PermitAll
+    @Path("/password/reset")
+    public Response resetPassword(@QueryParam("token") String tokenValue, AuthRequest authRequest) {
+        PasswordResetToken token = PasswordResetToken.find("token", tokenValue).firstResult();
+
+        if (token == null || token.isExpired()) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(new MessageResponse(appMessages.expired_token())).build();
+        }
+
+        User user = token.user;
+        user.password = BcryptUtil.bcryptHash(authRequest.password());
+        user.persist();
+
+        token.delete();
+
+        return Response.status(Response.Status.CREATED).entity(accountService.token(user)).build();
+    }
+
+    @POST
+    @PermitAll
+    @Path("/password/recovery")
+    public Response handlePasswordRecovery(AuthRequest request) {
+        if (request.email() == null || request.email().isBlank()) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new MessageResponse(appMessages.email_mandatory()))
+                    .build();
+        }
+
+        return passwordRecoveryService.createRecoveryToken(request.email());
+
     }
 }

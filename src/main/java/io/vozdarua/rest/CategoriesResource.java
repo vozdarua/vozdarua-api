@@ -1,13 +1,10 @@
 package io.vozdarua.rest;
 
 import io.vozdarua.config.RequestLocale;
-import io.vozdarua.model.dto.ErrorResource;
+import io.vozdarua.model.dto.MessageResponse;
 import io.vozdarua.model.entity.Category;
-import io.vozdarua.model.entity.Issue;
 import io.vozdarua.model.entity.Roles;
-import io.vozdarua.model.entity.User;
 import io.vozdarua.model.messages.AppMessages;
-import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
@@ -34,7 +31,7 @@ public class CategoriesResource {
     public Response list() {
         List<Category> categories = Category.listAll();
         if(categories.isEmpty()) {
-            return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResource(appMessages.categories_not_found())).build();
+            return Response.status(Response.Status.NOT_FOUND).entity(new MessageResponse(appMessages.categories_not_found())).build();
         }
         return Response.ok(categories).build();
     }
@@ -55,7 +52,7 @@ public class CategoriesResource {
         Category category = Category.findById(id);
 
         if(Objects.isNull(category)) {
-            return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResource(appMessages.categories_not_found())).build();
+            return Response.status(Response.Status.NOT_FOUND).entity(new MessageResponse(appMessages.categories_not_found())).build();
         }
 
         category.name = updatedCcategory.name;
@@ -74,7 +71,7 @@ public class CategoriesResource {
     public Response delete(@PathParam("id") Long id) {
         Category category = Category.findById(id);
         if(Objects.isNull(category)) {
-            return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResource(appMessages.categories_not_found())).build();
+            return Response.status(Response.Status.NOT_FOUND).entity(new MessageResponse(appMessages.categories_not_found())).build();
         }
         category.delete();
         return  Response.noContent().build();
@@ -86,7 +83,7 @@ public class CategoriesResource {
     public Response getById(@PathParam("id") Long id) {
         Category category = Category.findById(id);
         if (category == null) {
-            return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResource(appMessages.categories_not_found())).build();
+            return Response.status(Response.Status.NOT_FOUND).entity(new MessageResponse(appMessages.categories_not_found())).build();
         }
         return Response.ok(category).build();
     }

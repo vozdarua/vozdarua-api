@@ -265,7 +265,7 @@ class UserResourceTest {
                 .put("/user/99999")
                 .then()
                 .statusCode(404)
-                .body("error", notNullValue());
+                .body("message", notNullValue());
     }
 
     // ==================== DELETE TESTS ====================
@@ -340,7 +340,7 @@ class UserResourceTest {
                 .delete("/user/99999")
                 .then()
                 .statusCode(404)
-                .body("error", notNullValue());
+                .body("message", notNullValue());
     }
 
     @Test
