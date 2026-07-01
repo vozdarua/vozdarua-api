@@ -1,11 +1,11 @@
 package io.vozdarua.rest;
 
 import io.vozdarua.config.RequestLocale;
-import io.vozdarua.controller.service.AccountService;
+import io.vozdarua.controller.service.AuthService;
 import io.vozdarua.model.dto.ErrorResource;
 import io.vozdarua.model.dto.UserDTO;
+import io.vozdarua.model.entity.Issue;
 import io.vozdarua.model.entity.Roles;
-import io.vozdarua.model.entity.Status;
 import io.vozdarua.model.entity.User;
 import io.vozdarua.model.messages.AppMessages;
 import jakarta.annotation.security.PermitAll;
@@ -27,7 +27,7 @@ import java.util.Objects;
 public class UserResource {
 
     @Inject
-    AccountService accountService;
+    AuthService accountService;
 
     @Inject
     @RequestLocale
@@ -43,7 +43,7 @@ public class UserResource {
         }
 
         accountService.signupUser(user);
-        return Response.status(Response.Status.CREATED).entity(UserDTO.toUserDTO(user)).build();
+        return Response.status(Response.Status.CREATED).entity(accountService.token(user)).build();
     }
 
     @PUT
@@ -68,8 +68,7 @@ public class UserResource {
         user.password = updatedUser.password;
 
         user.persist();
-
-        return Response.status(Response.Status.CREATED).entity(UserDTO.toUserDTO(user)).build();
+        return Response.status(Response.Status.CREATED).entity(UserDTO.toUserDTO(user, Issue.count("reporter.email", user.email))).build();
 
     }
 
@@ -79,7 +78,7 @@ public class UserResource {
     public Response me(@Context SecurityContext securityContext) {
         String email = securityContext.getUserPrincipal().getName();
         User user = User.find("email", email).singleResult();
-        return Response.ok().entity(UserDTO.toUserDTO(user)).build();
+        return Response.ok().entity(UserDTO.toUserDTO(user, Issue.count("reporter.email", user.email))).build();
     }
 
     @DELETE
