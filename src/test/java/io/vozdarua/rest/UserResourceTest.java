@@ -70,8 +70,7 @@ class UserResourceTest {
                 .post("/user")
                 .then()
                 .statusCode(201)
-                .body("id", notNullValue())
-                .body("phone", equalTo("11944444444"));
+                .body("token", notNullValue());
     }
 
     @Test
@@ -92,8 +91,7 @@ class UserResourceTest {
                 .post("/user")
                 .then()
                 .statusCode(201)
-                .body("id", notNullValue())
-                .body("phone", equalTo("11933333333"));
+                .body("token", notNullValue());
     }
 
     @Test
@@ -114,8 +112,7 @@ class UserResourceTest {
                 .post("/user")
                 .then()
                 .statusCode(201)
-                .body("id", notNullValue())
-                .body("phone", equalTo("11922222222"));
+                .body("token", notNullValue());
     }
 
     @Test
