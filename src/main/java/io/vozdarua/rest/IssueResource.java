@@ -25,6 +25,8 @@ import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -339,8 +341,10 @@ public class IssueResource {
             return Response.status(Response.Status.BAD_REQUEST).entity(new MessageResponse(appMessages.not_valid_image())).build();
         }
 
-        String name = UUID.randomUUID() + "-" + form.file.fileName();
-        String fileKey = folderName + name;
+        String safeName = VozDaRuaUtils.sanitizeFileName(form.file.fileName());
+        String name = UUID.randomUUID() + "-" + safeName;
+        String datePath = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
+        String fileKey = folderName + datePath + "/" + name;
 
         try {
             PutObjectRequest putRequest = PutObjectRequest.builder()
