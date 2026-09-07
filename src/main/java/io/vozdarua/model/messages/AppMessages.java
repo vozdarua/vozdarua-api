@@ -13,6 +13,9 @@ public interface AppMessages {
     String issue_not_found();
 
     @Message
+    String comment_not_found();
+
+    @Message
     String severities_not_found();
 
     @Message
