@@ -43,3 +43,6 @@ nb-configuration.xml
 /.quarkus/cli/plugins/
 # TLS Certificates
 .certs/
+
+# Local machine overrides (this dev's Postgres password/port differ from CLAUDE.md docker setup)
+.mvn/maven.config
