@@ -7,7 +7,7 @@
 
 ## 🔴 Alta prioridade (bloqueiam feature já visível no front)
 
-- [ ] **Comentários em ocorrências.** Não existe entidade `Comment` nem endpoint
+- [x] **Comentários em ocorrências.** Não existe entidade `Comment` nem endpoint
   algum. O front já chama isso em `MapDrawer.vue` via `services/comentarios.js`
   (`GET/POST /occurrences/{id}/comments`) e silencia o erro no catch
   ("API pode não ter o endpoint ainda"). Sugestão: `GET/POST /issues/{id}/comments`
