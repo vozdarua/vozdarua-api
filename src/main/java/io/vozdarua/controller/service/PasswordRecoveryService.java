@@ -1,7 +1,5 @@
 package io.vozdarua.controller.service;
 
-import io.quarkus.mailer.Mail;
-import io.quarkus.mailer.reactive.ReactiveMailer;
 import io.vozdarua.config.RequestLocale;
 import io.vozdarua.model.dto.MessageResponse;
 import io.vozdarua.model.entity.PasswordResetToken;
@@ -20,14 +18,14 @@ import java.util.UUID;
 public class PasswordRecoveryService {
 
     @Inject
-    ReactiveMailer mailer;
-
-    @Inject
     @RequestLocale
     AppMessages appMessages;
 
     @ConfigProperty(name = "app.frontend-url")
     String frontendUrl;
+
+    @Inject
+    EmailService emailService;
 
     @Transactional
     public Response createRecoveryToken(String email) {
@@ -60,8 +58,7 @@ public class PasswordRecoveryService {
 
         // Send Email
         String resetUrl = frontendUrl + "/reset-password?token=" + token.token;
-        mailer.send(Mail.withText(email, appMessages.email_recovery_subject(),
-                appMessages.email_recovery_text(resetUrl))).subscribe().with(v -> {});
+        emailService.send(email, appMessages.email_recovery_text(resetUrl), appMessages.email_recovery_subject());
 
         return Response.ok(new MessageResponse(appMessages.recovery_email_sent()))
                 .build();

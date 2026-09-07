@@ -7,6 +7,7 @@ import io.vozdarua.controller.service.PasswordRecoveryService;
 import io.vozdarua.model.dto.AuthRequest;
 import io.vozdarua.model.dto.MessageResponse;
 import io.vozdarua.model.dto.UserDTO;
+import io.vozdarua.model.dto.UserStatsDTO;
 import io.vozdarua.model.entity.Issue;
 import io.vozdarua.model.entity.PasswordResetToken;
 import io.vozdarua.model.entity.Roles;
@@ -85,6 +86,23 @@ public class UserResource {
         String email = securityContext.getUserPrincipal().getName();
         User user = User.find("email", email).singleResult();
         return Response.ok().entity(UserDTO.toUserDTO(user, Issue.count("reporter.email", user.email))).build();
+    }
+
+    @GET
+    @RolesAllowed({Roles.USER, Roles.ADMIN})
+    @Path("/me/stats")
+    public Response meStats(@QueryParam("city") String city, @Context SecurityContext securityContext) {
+        String email = securityContext.getUserPrincipal().getName();
+
+        long inCity = (city != null && !city.isBlank()) ? Issue.count("address.city = ?1", city) : 0;
+        long total = Issue.count("reporter.email", email);
+        long resolved = Issue.count("reporter.email = ?1 and status.name = ?2", email, "Resolvido");
+        // ponytail: "open" via total - resolved instead of "status is null or status.name != X" —
+        // that OR silently drops null-status issues, since a dotted path like status.name always
+        // compiles to an inner join in JPQL, excluding rows with no status before the OR even runs.
+        long open = total - resolved;
+
+        return Response.ok(new UserStatsDTO(inCity, resolved, open)).build();
     }
 
     @DELETE

@@ -1,6 +1,9 @@
 package io.vozdarua.rest;
 
+import io.vozdarua.model.entity.Address;
+import io.vozdarua.model.entity.Issue;
 import io.vozdarua.model.entity.Roles;
+import io.vozdarua.model.entity.Status;
 import io.vozdarua.model.entity.User;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
@@ -22,6 +25,9 @@ class UserResourceTest {
     @BeforeEach
     @Transactional
     void setup() {
+        Issue.deleteAll();
+        Address.deleteAll();
+        Status.deleteAll();
         User.deleteAll();
 
         // Create regular user
@@ -384,5 +390,62 @@ class UserResourceTest {
         Assertions.assertNotNull(user);
         Assertions.assertEquals("11999999999", user.phone);
         Assertions.assertEquals("user@example.com", user.email);
+    }
+
+    // ==================== STATS TESTS ====================
+
+    @Transactional
+    void createIssuesForStats() {
+        User regularUser = User.findById(regularUserId);
+        User anotherUser = User.findById(anotherUserId);
+
+        Status resolved = new Status();
+        resolved.name = "Resolvido";
+        resolved.persist();
+
+        Status open = new Status();
+        open.name = "Aberto";
+        open.persist();
+
+        Issue resolvedIssue = new Issue();
+        resolvedIssue.reporter = regularUser;
+        resolvedIssue.status = resolved;
+        resolvedIssue.persist();
+
+        Issue openIssue = new Issue();
+        openIssue.reporter = regularUser;
+        openIssue.status = open;
+        openIssue.persist();
+
+        Issue noStatusIssue = new Issue();
+        noStatusIssue.reporter = regularUser;
+        noStatusIssue.persist();
+
+        Address address = new Address();
+        address.latitude = -12.97;
+        address.longitude = -38.5;
+        address.city = "Salvador";
+        address.persist();
+
+        Issue otherCityIssue = new Issue();
+        otherCityIssue.reporter = anotherUser;
+        otherCityIssue.address = address;
+        otherCityIssue.persist();
+    }
+
+    @Test
+    @Order(17)
+    @TestSecurity(user = "user@example.com", roles = {"USER"})
+    void testMeStats() {
+        createIssuesForStats();
+
+        given()
+                .when()
+                .get("/user/me/stats?city=Salvador")
+                .then()
+                .statusCode(200)
+                .body("resolved", equalTo(1))
+                .body("open", equalTo(2))
+                .body("inCity", equalTo(1));
     }
 }

@@ -18,11 +18,11 @@
   próprio código (`MinhasView.vue:2-5`) que está esperando isso: hoje só existe
   `GET /issues/reporter/{id}`, restrito a `ADMIN`, e o campo `reporter` do
   `Issue` vem mascarado (`@SecureField(ADMIN)`) — um usuário comum nem consegue
-  ver de quem é cada ocorrência. Precisa de um endpoint tipo `GET /issues/mine`
+  ver de quem é cada ocorrência. Precisa de um endpoint tipo `GET /issues/mine` em UserResource
   que resolva o reporter a partir do JWT da própria requisição (sem precisar de
   `ADMIN` nem expor o `reporter` de outras ocorrências).
 
-- [ ] **Feedback do app.** `FeedbackView.vue:13` só simula envio
+- [x] **Feedback do app.** `FeedbackView.vue:13` só simula envio
   (`await new Promise(r => setTimeout(r, 900))`) — nada chega no backend. Precisa
   de um endpoint tipo `POST /feedback` (tipo, mensagem, nome/e-mail opcionais).
 

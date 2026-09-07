@@ -3,6 +3,7 @@ package io.vozdarua.rest;
 import io.quarkus.qute.Template;
 import io.vozdarua.controller.restclient.ResendClient;
 import io.vozdarua.controller.restclient.dto.ResendPayload;
+import io.vozdarua.controller.service.EmailService;
 import io.vozdarua.model.entity.Feedback;
 import io.vozdarua.ratelimit.RateLimited;
 import jakarta.annotation.security.PermitAll;
@@ -23,12 +24,6 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 @Consumes(MediaType.APPLICATION_JSON)
 public class FeedbackResource {
 
-    @ConfigProperty(name = "resend.email.token")
-    String token;
-
-    @ConfigProperty(name = "resend.email.from")
-    String from;
-
     @ConfigProperty(name = "resend.email.vozdarua")
     String toVozDaRua;
 
@@ -36,8 +31,7 @@ public class FeedbackResource {
     Template feedbackTemplate;
 
     @Inject
-    @RestClient
-    public ResendClient resendClient;
+    EmailService emailService;
 
     @POST
     @PermitAll
@@ -56,7 +50,7 @@ public class FeedbackResource {
                 .data("message", feedback.message)
                 .data("type", feedback.type)
                 .render();
-        resendClient.sendEmail(token, new ResendPayload(from, new String[]{toVozDaRua}, "Novo Feedback: Voz da Rua App", body));
+        emailService.send(toVozDaRua, body, "Novo Feedback: Voz da Rua App");
         //TODO: retornar retorno e salvar no banco?
     }
 }
