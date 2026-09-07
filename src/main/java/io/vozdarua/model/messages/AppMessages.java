@@ -88,6 +88,9 @@ public interface AppMessages {
     String token_limit_rate();
 
     @Message
+    String rate_limit_exceeded();
+
+    @Message
     String recovery_email_sent();
 
     @Message

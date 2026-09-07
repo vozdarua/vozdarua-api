@@ -7,6 +7,7 @@ import io.vozdarua.model.dto.CepLocation;
 import io.vozdarua.model.dto.GeoResponse;
 import io.vozdarua.model.entity.State;
 import io.vozdarua.model.messages.AppMessages;
+import io.vozdarua.ratelimit.RateLimited;
 import jakarta.annotation.security.PermitAll;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
@@ -37,6 +38,7 @@ public class LocationResource {
     @GET
     @PermitAll
     @Path("/cep/{cep}")
+    @RateLimited(limit = 20, windowSeconds = 60)
     public Response findByCep(@PathParam("cep") String cep) {
         CepLocation dto = brazilClient.findByCep(cep);
         State state = State.find("uf", dto.state()).firstResult();
@@ -53,6 +55,7 @@ public class LocationResource {
 
     @GET
     @Path("/coordenate/")
+    @RateLimited(limit = 20, windowSeconds = 60)
     public Response getLatLongfromAddress(@QueryParam("address") String address) {
 
         List<GeoResponse> responses = geocodingClient.getCoordinates(address, "json", "MyQuarkusApp/1.0");

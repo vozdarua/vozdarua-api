@@ -9,6 +9,7 @@ import io.vozdarua.model.dto.MessageResponse;
 import io.vozdarua.model.entity.PasswordResetToken;
 import io.vozdarua.model.entity.User;
 import io.vozdarua.model.messages.AppMessages;
+import io.vozdarua.ratelimit.RateLimited;
 import jakarta.annotation.security.PermitAll;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -36,6 +37,7 @@ public class AuthResource {
     @POST
     @PermitAll
     @Path("/login")
+    @RateLimited(limit = 5, windowSeconds = 60)
     public Response login(AuthRequest request) {
 
         if (Objects.isNull(request) || Objects.isNull(request.email()) || request.email().isBlank() || Objects.isNull(request.password())
@@ -55,6 +57,7 @@ public class AuthResource {
     @Transactional
     @PermitAll
     @Path("/password/reset")
+    @RateLimited(limit = 10, windowSeconds = 3600)
     public Response resetPassword(@QueryParam("token") String tokenValue, AuthRequest authRequest) {
         PasswordResetToken token = PasswordResetToken.find("token", tokenValue).firstResult();
 
@@ -74,6 +77,7 @@ public class AuthResource {
     @POST
     @PermitAll
     @Path("/password/recovery")
+    @RateLimited(limit = 5, windowSeconds = 3600)
     public Response handlePasswordRecovery(AuthRequest request) {
         if (request.email() == null || request.email().isBlank()) {
             return Response.status(Response.Status.BAD_REQUEST)

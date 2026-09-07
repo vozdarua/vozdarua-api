@@ -8,6 +8,7 @@ import io.vozdarua.model.entity.Issue;
 import io.vozdarua.model.entity.Roles;
 import io.vozdarua.model.entity.User;
 import io.vozdarua.model.messages.AppMessages;
+import io.vozdarua.ratelimit.RateLimited;
 import io.vozdarua.utils.VozDaRuaUtils;
 import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
@@ -46,6 +47,7 @@ public class CommentResource {
     @POST
     @PermitAll
     @Transactional
+    @RateLimited(limit = 10, windowSeconds = 60)
     public Response create(@PathParam("issueId") Long issueId, @Valid Comment comment,
                             @Context SecurityContext securityContext, @Context HttpServerRequest request) {
         Issue issue = Issue.findById(issueId);

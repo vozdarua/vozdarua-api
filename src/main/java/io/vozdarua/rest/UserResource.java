@@ -12,6 +12,7 @@ import io.vozdarua.model.entity.PasswordResetToken;
 import io.vozdarua.model.entity.Roles;
 import io.vozdarua.model.entity.User;
 import io.vozdarua.model.messages.AppMessages;
+import io.vozdarua.ratelimit.RateLimited;
 import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
@@ -40,6 +41,7 @@ public class UserResource {
     @POST
     @PermitAll
     @Transactional
+    @RateLimited(limit = 5, windowSeconds = 3600)
     public Response create(@Valid User user) {
 
         if(User.findByEmailOrPhone(user.email, user.phone).isPresent()) {

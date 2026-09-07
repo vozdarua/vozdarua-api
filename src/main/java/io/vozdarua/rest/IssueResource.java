@@ -8,6 +8,7 @@ import io.vozdarua.model.dto.ImageUploadForm;
 import io.vozdarua.model.dto.UserDTO;
 import io.vozdarua.model.entity.*;
 import io.vozdarua.model.messages.AppMessages;
+import io.vozdarua.ratelimit.RateLimited;
 import io.vozdarua.utils.VozDaRuaUtils;
 import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
@@ -110,6 +111,7 @@ public class IssueResource {
     @POST
     @PermitAll
     @Transactional
+    @RateLimited(limit = 10, windowSeconds = 60)
     public Response create(@Valid Issue issue, @Context SecurityContext securityContext) {
         if(Objects.nonNull(securityContext.getUserPrincipal())) {
             String email = securityContext.getUserPrincipal().getName();
@@ -331,6 +333,7 @@ public class IssueResource {
     @Path("/image/upload")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
+    @RateLimited(limit = 10, windowSeconds = 60)
     public Response uploadToR2(ImageUploadForm form) {
 
         if (Objects.isNull(form.file) || form.file.size() == 0) {
