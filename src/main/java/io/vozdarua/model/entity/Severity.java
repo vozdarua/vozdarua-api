@@ -18,9 +18,9 @@ public class Severity extends PanacheEntity {
 
     @CreationTimestamp
     @Column(updatable = false)
-    private Instant createdAt;
+    public Instant createdAt;
 
     @UpdateTimestamp
-    private Instant updatedAt;
+    public Instant updatedAt;
 
 }

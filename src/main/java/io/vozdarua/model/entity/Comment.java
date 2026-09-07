@@ -38,5 +38,5 @@ public class Comment extends PanacheEntity {
 
     @CreationTimestamp
     @Column(updatable = false)
-    private Instant createdAt;
+    public Instant createdAt;
 }

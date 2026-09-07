@@ -31,10 +31,10 @@ public class User extends PanacheEntity {
 
     @CreationTimestamp
     @Column(updatable = false)
-    private Instant createdAt;
+    public Instant createdAt;
 
     @UpdateTimestamp
-    private Instant updatedAt;
+    public Instant updatedAt;
 
     public static Optional<User> findByEmailOrPhone(String email, String phone) {
         return find("lower(email) = lower(?1) or phone = ?2", email, phone).firstResultOptional();

@@ -47,10 +47,10 @@ public class Issue extends PanacheEntity {
 
     @CreationTimestamp
     @Column(updatable = false)
-    private Instant createdAt;
+    public Instant createdAt;
 
     @UpdateTimestamp
-    private Instant updatedAt;
+    public Instant updatedAt;
 
     public static Issue findByIdWithCategoryAndTags(Long id) {
         return Issue.find("SELECT i FROM Issue i LEFT JOIN FETCH i.category c LEFT JOIN FETCH c.tags WHERE i.id = ?1", id).firstResult();
