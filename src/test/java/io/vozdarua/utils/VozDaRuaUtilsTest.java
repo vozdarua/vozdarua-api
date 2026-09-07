@@ -31,4 +31,20 @@ class VozDaRuaUtilsTest {
     void stripsLeadingDots() {
         assertEquals("bashrc", VozDaRuaUtils.sanitizeFileName("..bashrc"));
     }
+
+    @Test
+    void masksEmailKeepingOnlyLocalPart() {
+        assertEquals("pedrosilva...", VozDaRuaUtils.maskEmail("pedrosilva@gmail.com"));
+    }
+
+    @Test
+    void masksEmailWithoutAtSign() {
+        assertEquals("notanemail...", VozDaRuaUtils.maskEmail("notanemail"));
+    }
+
+    @Test
+    void maskEmailPassesThroughBlankOrNull() {
+        assertEquals(null, VozDaRuaUtils.maskEmail(null));
+        assertEquals("   ", VozDaRuaUtils.maskEmail("   "));
+    }
 }

@@ -654,9 +654,9 @@ class IssueResourceTest {
                 .statusCode(200)
                 .body("$", hasSize(2))
                 .body("[0].issueCount", equalTo(3))
-                .body("[0].email", equalTo("test@example.com"))
+                .body("[0].email", equalTo("test..."))
                 .body("[1].issueCount", equalTo(2))
-                .body("[1].email", equalTo("admin2@example.com"));
+                .body("[1].email", equalTo("admin2..."));
     }
 
     @Transactional

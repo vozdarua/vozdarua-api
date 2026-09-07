@@ -17,6 +17,15 @@ public class VozDaRuaUtils {
         return request.remoteAddress() != null ? request.remoteAddress().host() : null;
     }
 
+    // Keeps only the local part of the email (before @) followed by "...", so the full
+    // address never leaves the server for a comment/ranking display. Mirrors the format
+    // chosen for the frontend's own (now-redundant, idempotent) src/utils/email.js.
+    public static String maskEmail(String email) {
+        if (email == null || email.isBlank()) return email;
+        int at = email.indexOf('@');
+        return (at == -1 ? email : email.substring(0, at)) + "...";
+    }
+
     // Strips any path segments and keeps only safe characters, so a client-supplied
     // filename can't escape the intended S3/R2 key prefix (e.g. "../../etc/passwd").
     public static String sanitizeFileName(String fileName) {

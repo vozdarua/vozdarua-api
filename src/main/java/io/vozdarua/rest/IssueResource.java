@@ -380,7 +380,7 @@ public class IssueResource {
     @Path("/ranking")
     public Response ranking() {
         List<UserDTO> ranking = Issue.rankingByReporter().stream()
-            .map(row -> new UserDTO((Long) row[0], (String) row[1], (String) row[2], (String) row[3], (Long) row[4]))
+            .map(row -> new UserDTO((Long) row[0], (String) row[1], VozDaRuaUtils.maskEmail((String) row[2]), (String) row[3], (Long) row[4]))
             .toList();
         return Response.ok(ranking).build();
     }

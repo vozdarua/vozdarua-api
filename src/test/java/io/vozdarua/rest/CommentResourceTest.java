@@ -107,8 +107,8 @@ class CommentResourceTest {
                 .then()
                 .statusCode(201)
                 .body("text", equalTo("Confirmo, também vi isso"))
-                // authorEmail is public and set even though the User relation itself stays hidden
-                .body("authorEmail", equalTo("test@example.com"))
+                // authorEmail is public (masked) and set even though the User relation itself stays hidden
+                .body("authorEmail", equalTo("test..."))
                 .body("author", nullValue());
     }
 
