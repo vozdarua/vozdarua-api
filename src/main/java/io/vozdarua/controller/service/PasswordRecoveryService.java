@@ -11,6 +11,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.core.Response;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -25,11 +26,16 @@ public class PasswordRecoveryService {
     @RequestLocale
     AppMessages appMessages;
 
+    @ConfigProperty(name = "app.frontend-url")
+    String frontendUrl;
+
     @Transactional
     public Response createRecoveryToken(String email) {
         User user = User.find("email", email).firstResult();
         if (user == null) {
-            return Response.status(Response.Status.BAD_REQUEST).build();
+            // Não revela se o e-mail existe: mesma resposta do caminho feliz, só que
+            // sem gerar token nem enviar e-mail de verdade.
+            return Response.ok(new MessageResponse(appMessages.recovery_email_sent())).build();
         }
 
         // Check if they already requested one recently
@@ -53,7 +59,7 @@ public class PasswordRecoveryService {
         token.persist();
 
         // Send Email
-        String resetUrl = "https://vozdarua.com.br/reset-password?token=" + token.token;
+        String resetUrl = frontendUrl + "/reset-password?token=" + token.token;
         mailer.send(Mail.withText(email, appMessages.email_recovery_subject(),
                 appMessages.email_recovery_text(resetUrl))).subscribe().with(v -> {});
 
