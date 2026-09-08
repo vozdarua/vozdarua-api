@@ -5,6 +5,7 @@ import io.vozdarua.config.RequestLocale;
 import io.vozdarua.controller.service.AuthService;
 import io.vozdarua.controller.service.PasswordRecoveryService;
 import io.vozdarua.model.dto.AuthRequest;
+import io.vozdarua.model.dto.IssueDTO;
 import io.vozdarua.model.dto.MessageResponse;
 import io.vozdarua.model.dto.UserDTO;
 import io.vozdarua.model.dto.UserStatsDTO;
@@ -25,6 +26,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.SecurityContext;
 
+import java.util.List;
 import java.util.Objects;
 
 @Path("/user")
@@ -103,6 +105,17 @@ public class UserResource {
         long open = total - resolved;
 
         return Response.ok(new UserStatsDTO(inCity, resolved, open)).build();
+    }
+
+    @GET
+    @RolesAllowed({Roles.USER, Roles.ADMIN})
+    @Path("/me/issues")
+    public Response myIssues(@Context SecurityContext securityContext) {
+        String email = securityContext.getUserPrincipal().getName();
+        List<IssueDTO> issues = Issue.<Issue>list("reporter.email", email).stream()
+                .map(IssueDTO::toIssueDTO)
+                .toList();
+        return Response.ok(issues).build();
     }
 
     @DELETE

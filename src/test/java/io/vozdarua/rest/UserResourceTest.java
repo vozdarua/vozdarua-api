@@ -13,6 +13,7 @@ import org.junit.jupiter.api.*;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.Matchers.hasSize;
 
 @QuarkusTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -447,5 +448,58 @@ class UserResourceTest {
                 .body("resolved", equalTo(1))
                 .body("open", equalTo(2))
                 .body("inCity", equalTo(1));
+    }
+
+    // ==================== MY ISSUES TESTS ====================
+
+    @Transactional
+    Issue persistIssueFor(User reporter) {
+        Issue issue = new Issue();
+        issue.reporter = reporter;
+        issue.description = "Buraco na rua";
+        issue.persist();
+        return issue;
+    }
+
+    @Test
+    @Order(18)
+    @TestSecurity(user = "user@example.com", roles = {"USER"})
+    void testMyIssuesReturnsOwnIssueWithReporter() {
+        persistIssueFor(User.findById(regularUserId));
+        persistIssueFor(User.findById(anotherUserId));
+
+        given()
+                .when()
+                .get("/user/me/issues")
+                .then()
+                .statusCode(200)
+                .body("$", hasSize(1))
+                .body("[0].reporter.email", equalTo("user@example.com"));
+    }
+
+    @Test
+    @Order(19)
+    @TestSecurity(user = "user@example.com", roles = {"USER"})
+    void testMyIssuesEmptyWhenNoneReported() {
+        given()
+                .when()
+                .get("/user/me/issues")
+                .then()
+                .statusCode(200)
+                .body("$", hasSize(0));
+    }
+
+    @Test
+    @Order(20)
+    @TestSecurity(user = "another@example.com", roles = {"USER"})
+    void testMyIssuesDoesNotLeakOtherUsersIssues() {
+        persistIssueFor(User.findById(regularUserId));
+
+        given()
+                .when()
+                .get("/user/me/issues")
+                .then()
+                .statusCode(200)
+                .body("$", hasSize(0));
     }
 }
