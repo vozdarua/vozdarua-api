@@ -28,11 +28,13 @@
 
 ## 🟡 Média prioridade (funciona, mas é client-side e não escala)
 
-- [ ] **Métricas por cidade.** `CityMetricsSheet.vue`/`CityMetricsSidebar.vue`
-  calculam tudo no client (contagem por status/categoria/severidade/bairro) a
-  partir da lista inteira de ocorrências da cidade. O `fiscalizai-briefing.md`
-  original já previa um `GET /metricas?cidade=X&bairro=Y` com esse shape
-  (emAberto, resolvidas, topBairros, topCategorias etc.) — nunca foi implementado.
+- [x] **Métricas por cidade.** `GET /issues/metrics?cityId=&neighborhood=`
+  agora agrega no backend (total, `byStatus`, `byCategory` top-6,
+  `byNeighborhood` top-6, `bySeverity`), no mesmo estilo de `rankingByCity`.
+  `CityMetricsSheet.vue`/`CityMetricsSidebar.vue` não recalculam mais isso a
+  partir da lista inteira de ocorrências — as ~40 linhas de redução
+  duplicadas nos dois viraram um composable único
+  (`useCityMetricsBreakdown`).
 
 - [x] **Cidade como conceito real no backend.** `City`/`State` agora são
   entidades reais (seed com todas as ~5571 cidades do IBGE), `Address` ganhou
@@ -44,11 +46,13 @@
   próximas" pela localização real do usuário em vez de distância entre as
   ~65 cidades chumbadas.
 
-- [ ] **Paginação e filtros combináveis em `/issues`.** `GET /issues` carrega a
-  tabela inteira sem paginação (`Issue.listAll()`), e os filtros
-  (`/category/{id}`, `/status/{id}`, `/severity/{id}`, `/address`) são endpoints
-  separados que não combinam entre si (ex: não dá pra filtrar categoria + cidade
-  numa única chamada). Vira gargalo assim que o volume de ocorrências crescer.
+- [x] **Paginação e filtros combináveis em `/issues`.** `GET /issues` agora
+  pagina (`page`/`size`, resposta `{content, page, size, totalElements,
+  totalPages}`) e aceita `cityId`/`stateId`/`neighborhood`/`categoryId`/
+  `statusId`/`severityId` combináveis entre si numa única chamada. Os
+  endpoints dedicados (`/category/{id}`, `/status/{id}`, `/severity/{id}`,
+  `/address`) foram removidos — nenhum tinha consumidor no front. Sem match
+  agora é `200` + `content: []`, não mais `404`/`400`.
 
 - [x] **Ranking por cidade.** `GET /issues/ranking?cityId=` agora aceita um
   filtro opcional de cidade (mesmo padrão de `rankingByCity`), e passou a

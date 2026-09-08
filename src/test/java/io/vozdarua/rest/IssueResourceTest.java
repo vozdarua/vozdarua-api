@@ -143,8 +143,10 @@ class IssueResourceTest {
                 .get("/issues")
                 .then()
                 .statusCode(200)
-                .body("$", hasSize(1))
-                .body("[0].description", equalTo("Buraco grande na rua"));
+                .body("content", hasSize(1))
+                .body("content[0].description", equalTo("Buraco grande na rua"))
+                .body("totalElements", equalTo(1))
+                .body("totalPages", equalTo(1));
     }
 
     @Test
@@ -278,44 +280,47 @@ class IssueResourceTest {
 
     @Test
     @Order(9)
-    void testListIssuesByCategory() {
+    void testListIssuesFilteredByCategoryId() {
         createTestIssueViaAPI(false);
 
         given()
+                .queryParam("categoryId", categoryId)
                 .when()
-                .get("/issues/category/" + categoryId)
+                .get("/issues")
                 .then()
                 .statusCode(200)
-                .body("$", hasSize(1))
-                .body("[0].category.id", equalTo(categoryId.intValue()));
+                .body("content", hasSize(1))
+                .body("content[0].category.id", equalTo(categoryId.intValue()));
     }
 
     @Test
     @Order(10)
-    void testListIssuesByStatus() {
+    void testListIssuesFilteredByStatusId() {
         createTestIssueViaAPI(false);
 
         given()
+                .queryParam("statusId", statusOpenId)
                 .when()
-                .get("/issues/status/" + statusOpenId)
+                .get("/issues")
                 .then()
                 .statusCode(200)
-                .body("$", hasSize(1))
-                .body("[0].status.name", equalTo("Aberto"));
+                .body("content", hasSize(1))
+                .body("content[0].status.name", equalTo("Aberto"));
     }
 
     @Test
     @Order(11)
-    void testListIssuesBySeverity() {
+    void testListIssuesFilteredBySeverityId() {
         createTestIssueViaAPI(false);
 
         given()
+                .queryParam("severityId", severityHighId)
                 .when()
-                .get("/issues/severity/" + severityHighId)
+                .get("/issues")
                 .then()
                 .statusCode(200)
-                .body("$", hasSize(1))
-                .body("[0].severity.name", equalTo("Alto"));
+                .body("content", hasSize(1))
+                .body("content[0].severity.name", equalTo("Alto"));
     }
 
     @Test
@@ -385,161 +390,59 @@ class IssueResourceTest {
 
     @Test
     @Order(14)
-    void testListIssuesByAddressWithCity() {
+    void testListIssuesFilteredByStateId() {
         createTestIssueViaAPI(false);
 
         given()
-                .queryParam("cityId", sjcCityId)
+                .queryParam("stateId", spStateId)
                 .when()
-                .get("/issues/address")
+                .get("/issues")
                 .then()
                 .statusCode(200)
-                .body("$", hasSize(1))
-                .body("[0].address.city", equalTo("São José dos Campos"));
+                .body("content", hasSize(1))
+                .body("content[0].address.state", equalTo("SP"));
     }
 
     @Test
     @Order(15)
-    void testListIssuesByAddressWithState() {
-        createTestIssueViaAPI(false);
-
-        given()
-                .queryParam("stateId", spStateId)
-                .when()
-                .get("/issues/address")
-                .then()
-                .statusCode(200)
-                .body("$", hasSize(1))
-                .body("[0].address.state", equalTo("SP"));
-    }
-
-    @Test
-    @Order(16)
-    void testListIssuesByAddressWithNeighborhood() {
+    void testListIssuesFilteredByNeighborhood() {
         createTestIssueViaAPI(false);
 
         given()
                 .queryParam("neighborhood", "Cidade Morumbi")
                 .when()
-                .get("/issues/address")
+                .get("/issues")
                 .then()
                 .statusCode(200)
-                .body("$", hasSize(1))
-                .body("[0].address.neighborhood", equalTo("Cidade Morumbi"));
+                .body("content", hasSize(1))
+                .body("content[0].address.neighborhood", equalTo("Cidade Morumbi"));
+    }
+
+    // O ponto central do TODO: dois filtros combinados numa chamada só, algo que os
+    // antigos endpoints dedicados (/category/{id}, /address, etc.) não permitiam.
+    @Test
+    @Order(16)
+    void testListIssuesCombinesCategoryAndCityFilters() {
+        createTestIssueViaAPI(false); // São José dos Campos, categoryId
+        createTwoIssuesForAdmin(); // "Admin City" (cityRef nunca resolve), mesma categoryId
+
+        given()
+                .queryParam("categoryId", categoryId)
+                .queryParam("cityId", sjcCityId)
+                .when()
+                .get("/issues")
+                .then()
+                .statusCode(200)
+                .body("content", hasSize(1))
+                .body("content[0].address.city", equalTo("São José dos Campos"));
     }
 
     @Test
     @Order(17)
-    void testListIssuesByAddressWithCityAndState() {
-        createTestIssueViaAPI(false);
-
-        given()
-                .queryParam("cityId", sjcCityId)
-                .queryParam("stateId", spStateId)
-                .when()
-                .get("/issues/address")
-                .then()
-                .statusCode(200)
-                .body("$", hasSize(1))
-                .body("[0].address.city", equalTo("São José dos Campos"))
-                .body("[0].address.state", equalTo("SP"));
-    }
-
-    @Test
-    @Order(18)
-    void testListIssuesByAddressWithCityAndNeighborhood() {
-        createTestIssueViaAPI(false);
-
-        given()
-                .queryParam("cityId", sjcCityId)
-                .queryParam("neighborhood", "Cidade Morumbi")
-                .when()
-                .get("/issues/address")
-                .then()
-                .statusCode(200)
-                .body("$", hasSize(1))
-                .body("[0].address.city", equalTo("São José dos Campos"))
-                .body("[0].address.neighborhood", equalTo("Cidade Morumbi"));
-    }
-
-    @Test
-    @Order(19)
-    void testListIssuesByAddressWithStateAndNeighborhood() {
-        createTestIssueViaAPI(false);
-
-        given()
-                .queryParam("stateId", spStateId)
-                .queryParam("neighborhood", "Cidade Morumbi")
-                .when()
-                .get("/issues/address")
-                .then()
-                .statusCode(200)
-                .body("$", hasSize(1))
-                .body("[0].address.state", equalTo("SP"))
-                .body("[0].address.neighborhood", equalTo("Cidade Morumbi"));
-    }
-
-    @Test
-    @Order(20)
-    void testListIssuesByAddressWithAllParameters() {
-        createTestIssueViaAPI(false);
-
-        given()
-                .queryParam("cityId", sjcCityId)
-                .queryParam("stateId", spStateId)
-                .queryParam("neighborhood", "Cidade Morumbi")
-                .when()
-                .get("/issues/address")
-                .then()
-                .statusCode(200)
-                .body("$", hasSize(1))
-                .body("[0].address.city", equalTo("São José dos Campos"))
-                .body("[0].address.state", equalTo("SP"))
-                .body("[0].address.neighborhood", equalTo("Cidade Morumbi"));
-    }
-
-    @Test
-    @Order(21)
-    void testListIssuesByAddressNotFound() {
-        createTestIssueViaAPI(false);
-
-        given()
-                .queryParam("cityId", rioCityId)
-                .when()
-                .get("/issues/address")
-                .then()
-                .statusCode(404);
-    }
-
-    @Test
-    @Order(22)
-    void testListIssuesByAddressNoParameters() {
-        given()
-                .when()
-                .get("/issues/address")
-                .then()
-                .statusCode(400);
-    }
-
-    @Test
-    @Order(23)
-    void testListIssuesByAddressEmptyParameters() {
-        given()
-                .queryParam("neighborhood", "")
-                .when()
-                .get("/issues/address")
-                .then()
-                .statusCode(400);
-    }
-
-    @Test
-    @Order(24)
     @Transactional
-    void testListIssuesByAddressMultipleResults() {
-        // Create first issue
-        createTestIssueViaAPI(false);
+    void testListIssuesCombinesCityAndNeighborhoodFilters() {
+        createTestIssueViaAPI(false); // SJC, "Cidade Morumbi"
 
-        // Create second issue with same city but different neighborhood
         String secondIssueJson = String.format("""
             {
                 "description": "Outro problema na cidade",
@@ -569,24 +472,67 @@ class IssueResourceTest {
                 .then()
                 .statusCode(201);
 
-        // Query by city should return both
         given()
                 .queryParam("cityId", sjcCityId)
                 .when()
-                .get("/issues/address")
+                .get("/issues")
                 .then()
                 .statusCode(200)
-                .body("$", hasSize(2));
+                .body("content", hasSize(2));
 
-        // Query by specific neighborhood should return only one
         given()
+                .queryParam("cityId", sjcCityId)
                 .queryParam("neighborhood", "Centro")
                 .when()
-                .get("/issues/address")
+                .get("/issues")
                 .then()
                 .statusCode(200)
-                .body("$", hasSize(1))
-                .body("[0].address.neighborhood", equalTo("Centro"));
+                .body("content", hasSize(1))
+                .body("content[0].address.neighborhood", equalTo("Centro"));
+    }
+
+    // Mudança de comportamento deliberada: filtro sem match agora é 200 + content vazio,
+    // não 404 - necessário pra paginação fazer sentido (uma página fora do fim não é "not found").
+    @Test
+    @Order(18)
+    void testListIssuesNoMatchReturnsEmptyContentNot404() {
+        createTestIssueViaAPI(false);
+
+        given()
+                .queryParam("cityId", rioCityId)
+                .when()
+                .get("/issues")
+                .then()
+                .statusCode(200)
+                .body("content", hasSize(0))
+                .body("totalElements", equalTo(0));
+    }
+
+    @Test
+    @Order(19)
+    void testListIssuesPagination() {
+        createTestIssueViaAPI(false);
+        createTestIssueViaAPI(false);
+        createTestIssueViaAPI(false);
+
+        given()
+                .queryParam("size", 2)
+                .when()
+                .get("/issues")
+                .then()
+                .statusCode(200)
+                .body("content", hasSize(2))
+                .body("totalElements", equalTo(3))
+                .body("totalPages", equalTo(2));
+
+        given()
+                .queryParam("size", 2)
+                .queryParam("page", 1)
+                .when()
+                .get("/issues")
+                .then()
+                .statusCode(200)
+                .body("content", hasSize(1));
     }
 
     @Test
@@ -751,8 +697,8 @@ class IssueResourceTest {
                 .get("/issues")
                 .then()
                 .statusCode(200)
-                .body("$", hasSize(1))
-                .body("[0].address.city", equalTo("São José dos Campos"));
+                .body("content", hasSize(1))
+                .body("content[0].address.city", equalTo("São José dos Campos"));
     }
 
     @Test
@@ -770,6 +716,82 @@ class IssueResourceTest {
                 .body("$", hasSize(1))
                 .body("[0].email", equalTo("test..."))
                 .body("[0].total", equalTo(1));
+    }
+
+    @Test
+    @Order(33)
+    void testMetricsRequiresCityId() {
+        given()
+                .when()
+                .get("/issues/metrics")
+                .then()
+                .statusCode(400);
+    }
+
+    @Test
+    @Order(34)
+    void testMetricsForCity() {
+        createTestIssueViaAPI(false); // Aberto, Alto, "Cidade Morumbi"
+
+        String secondIssueJson = String.format("""
+            {
+                "description": "Outro problema na cidade",
+                "severity": {"id": %d},
+                "status": {"id": %d},
+                "confirmIssue": 0,
+                "category": {"id": %d},
+                "reporter": {"id": %d},
+                "address": {
+                     "latitude": -23.5505,
+                     "longitude": -46.6333,
+                     "cep": "12236-421",
+                     "street": "Rua Outra",
+                     "number": "100",
+                     "neighborhood": "Centro",
+                     "city": "São José dos Campos",
+                     "state": "SP"
+                }
+            }
+            """, severityMediumId, statusResolvedId, categoryId, userId);
+
+        given()
+                .contentType(ContentType.JSON)
+                .body(secondIssueJson)
+                .when()
+                .post("/issues")
+                .then()
+                .statusCode(201);
+
+        given()
+                .queryParam("cityId", sjcCityId)
+                .when()
+                .get("/issues/metrics")
+                .then()
+                .statusCode(200)
+                .body("total", equalTo(2))
+                .body("byCategory.size()", equalTo(1))
+                .body("byCategory[0].name", equalTo("Buraco no asfalto"))
+                .body("byCategory[0].count", equalTo(2))
+                .body("byNeighborhood.size()", equalTo(2))
+                .body("bySeverity.find { it.name == 'Alto' }.count", equalTo(1))
+                .body("bySeverity.find { it.name == 'Médio' }.count", equalTo(1))
+                .body("byStatus.find { it.name == 'Aberto' }.count", equalTo(1))
+                .body("byStatus.find { it.name == 'Resolvido' }.count", equalTo(1));
+    }
+
+    @Test
+    @Order(35)
+    void testMetricsFilteredByNeighborhood() {
+        createTestIssueViaAPI(false); // "Cidade Morumbi"
+
+        given()
+                .queryParam("cityId", sjcCityId)
+                .queryParam("neighborhood", "Bairro Sem Ocorrências")
+                .when()
+                .get("/issues/metrics")
+                .then()
+                .statusCode(200)
+                .body("total", equalTo(0));
     }
 
     @Transactional

@@ -2,10 +2,12 @@ package io.vozdarua.rest;
 
 import io.vozdarua.config.RequestLocale;
 import io.vozdarua.controller.restclient.GeocodingClient;
+import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.vozdarua.model.dto.MessageResponse;
 import io.vozdarua.model.dto.GeoResponse;
 import io.vozdarua.model.dto.ImageUploadForm;
 import io.vozdarua.model.dto.ContributorRankingDTO;
+import io.vozdarua.model.dto.PagedResponse;
 import io.vozdarua.model.entity.*;
 import io.vozdarua.model.messages.AppMessages;
 import io.vozdarua.ratelimit.RateLimited;
@@ -28,6 +30,7 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -60,12 +63,42 @@ public class IssueResource {
 
     @GET
     @PermitAll
-    public Response list(@QueryParam("cityId") Long cityId) {
-        List<Issue> issues = cityId != null ? Issue.list("address.cityRef.id", cityId) : Issue.listAll();
-        if(issues.isEmpty()) {
-            return Response.status(Response.Status.NOT_FOUND).entity(new MessageResponse(appMessages.issue_not_found())).build();
+    public Response list(
+            @QueryParam("cityId") Long cityId,
+            @QueryParam("stateId") Long stateId,
+            @QueryParam("neighborhood") String neighborhood,
+            @QueryParam("categoryId") Long categoryId,
+            @QueryParam("statusId") Long statusId,
+            @QueryParam("severityId") Long severityId,
+            @QueryParam("page") @DefaultValue("0") int page,
+            @QueryParam("size") @DefaultValue("20") int size) {
+
+        int pageSize = Math.min(Math.max(size, 1), 500); // ponytail: cap simples contra abuso; MapaView usa o teto (500) hoje
+
+        StringBuilder jpql = new StringBuilder();
+        List<Object> params = new ArrayList<>();
+        appendFilter(jpql, params, "address.cityRef.id", cityId);
+        appendFilter(jpql, params, "address.stateRef.id", stateId);
+        appendFilter(jpql, params, "address.neighborhood", neighborhood);
+        appendFilter(jpql, params, "category.id", categoryId);
+        appendFilter(jpql, params, "status.id", statusId);
+        appendFilter(jpql, params, "severity.id", severityId);
+
+        PanacheQuery<Issue> query = (jpql.isEmpty() ? Issue.findAll() : Issue.find(jpql.toString(), params.toArray()))
+                .page(Math.max(page, 0), pageSize);
+
+        return Response.ok(new PagedResponse<>(query.list(), page, pageSize, query.count(), query.pageCount())).build();
+    }
+
+    private static void appendFilter(StringBuilder jpql, List<Object> params, String path, Object value) {
+        if (value == null || (value instanceof String s && s.isBlank())) {
+            return;
         }
-        return Response.ok(issues).build();
+        if (!jpql.isEmpty()) {
+            jpql.append(" and ");
+        }
+        params.add(value);
+        jpql.append(path).append(" = ?").append(params.size());
     }
 
     @PUT
@@ -256,39 +289,6 @@ public class IssueResource {
     }
 
     @GET
-    @PermitAll
-    @Path("/category/{categoryId}")
-    public Response listByCategory(@PathParam("categoryId") Long categoryId) {
-        List<Issue> issues = Issue.list("category.id", categoryId);
-        if (issues.isEmpty()) {
-            return Response.status(Response.Status.NOT_FOUND).entity(new MessageResponse(appMessages.no_issues_found_for_category())).build();
-        }
-        return Response.ok(issues).build();
-    }
-
-    @GET
-    @PermitAll
-    @Path("/status/{statusId}")
-    public Response listByStatus(@PathParam("statusId") Long statusId) {
-        List<Issue> issues = Issue.list("status.id", statusId);
-        if (issues.isEmpty()) {
-            return Response.status(Response.Status.NOT_FOUND).entity(new MessageResponse(appMessages.no_issues_found_for_status())).build();
-        }
-        return Response.ok(issues).build();
-    }
-
-    @GET
-    @PermitAll
-    @Path("/severity/{severityId}")
-    public Response listBySeverity(@PathParam("severityId") Long severityId) {
-        List<Issue> issues = Issue.list("severity.id", severityId);
-        if (issues.isEmpty()) {
-            return Response.status(Response.Status.NOT_FOUND).entity(new MessageResponse(appMessages.no_issues_found_for_severity())).build();
-        }
-        return Response.ok(issues).build();
-    }
-
-    @GET
     @RolesAllowed({Roles.ADMIN})
     @Path("/reporter/{reporterId}")
     public Response listByReporter(@PathParam("reporterId") Long reporterId) {
@@ -296,58 +296,6 @@ public class IssueResource {
         if (issues.isEmpty()) {
             return Response.status(Response.Status.NOT_FOUND).entity(new MessageResponse(appMessages.no_issues_found_for_reporter())).build();
         }
-        return Response.ok(issues).build();
-    }
-
-    @GET
-    @PermitAll
-    @Path("/address")
-    public Response listByAddress(
-            @QueryParam("cityId") Long cityId,
-            @QueryParam("stateId") Long stateId,
-            @QueryParam("neighborhood") String neighborhood) {
-
-        StringBuilder queryBuilder = new StringBuilder();
-        Object[] params = new Object[3];
-        int paramIndex = 0;
-
-        if (cityId != null) {
-            queryBuilder.append("address.cityRef.id = ?").append(++paramIndex);
-            params[paramIndex - 1] = cityId;
-        }
-
-        if (stateId != null) {
-            if (!queryBuilder.isEmpty()) {
-                queryBuilder.append(" and ");
-            }
-            queryBuilder.append("address.stateRef.id = ?").append(++paramIndex);
-            params[paramIndex - 1] = stateId;
-        }
-
-        if (neighborhood != null && !neighborhood.isEmpty()) {
-            if (!queryBuilder.isEmpty()) {
-                queryBuilder.append(" and ");
-            }
-            queryBuilder.append("address.neighborhood = ?").append(++paramIndex);
-            params[paramIndex - 1] = neighborhood;
-        }
-
-        if (queryBuilder.isEmpty()) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(new MessageResponse(appMessages.address_parameters_required()))
-                    .build();
-        }
-
-        Object[] actualParams = new Object[paramIndex];
-        System.arraycopy(params, 0, actualParams, 0, paramIndex);
-
-        List<Issue> issues = Issue.list(queryBuilder.toString(), actualParams);
-        if (issues.isEmpty()) {
-            return Response.status(Response.Status.NOT_FOUND)
-                    .entity(new MessageResponse(appMessages.no_issues_found_for_address()))
-                    .build();
-        }
-
         return Response.ok(issues).build();
     }
 
@@ -408,6 +356,16 @@ public class IssueResource {
                 VozDaRuaUtils.maskEmail((String) row[2]), (String) row[3], (Long) row[4], (Long) row[5]))
             .toList();
         return Response.ok(ranking).build();
+    }
+
+    @GET
+    @PermitAll
+    @Path("/metrics")
+    public Response metrics(@QueryParam("cityId") Long cityId, @QueryParam("neighborhood") String neighborhood) {
+        if (cityId == null) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(new MessageResponse(appMessages.city_id_required())).build();
+        }
+        return Response.ok(Issue.metricsForCity(cityId, neighborhood)).build();
     }
 
     private Optional<GeoResponse> getGeoResponse(Address address) {

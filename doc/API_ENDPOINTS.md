@@ -21,35 +21,44 @@ Esta documentação apresenta todos os endpoints disponíveis na API Voz da Rua,
 
 **Tradução**: Ocorrências - problemas urbanos como buracos, iluminação defeituosa, acúmulo de lixo, etc.
 
-### 1.1. Listar Todas as Ocorrências
+### 1.1. Listar Ocorrências (paginado, com filtros combináveis)
 
 ```
 GET /issues
 ```
 
-**Descrição**: Retorna todas as ocorrências cadastradas no sistema.
+**Descrição**: Retorna as ocorrências cadastradas, paginadas. Todos os filtros abaixo são opcionais e combináveis entre si (ex: `categoryId` + `cityId` numa única chamada).
 
-**Resposta de Sucesso**: `200 OK`
-```json
-[
-  {
-    "id": 1,
-    "description": "Buraco na rua",
-    "confirmIssue": 5,
-    "photo": "https://example.com/photo.jpg",
-    "address": "Rua das Flores, 123",
-    "reporter": {...},
-    "category": {...},
-    "severity": {...},
-    "status": {...}
-  }
-]
-```
+**Query Params**:
+- `cityId` (long, opcional) - filtra por cidade resolvida (`address.cityRef`)
+- `stateId` (long, opcional) - filtra por estado resolvido (`address.stateRef`)
+- `neighborhood` (string, opcional) - filtra por bairro (`address.neighborhood`, igualdade exata)
+- `categoryId` (long, opcional)
+- `statusId` (long, opcional)
+- `severityId` (long, opcional)
+- `page` (int, opcional, default `0`)
+- `size` (int, opcional, default `20`, máximo `500`)
 
-**Resposta de Erro**: `404 NOT FOUND`
+**Resposta de Sucesso**: `200 OK` (sempre — sem resultados retorna `content: []`, não 404)
 ```json
 {
-  "message": "Nenhuma ocorrência encontrada"
+  "content": [
+    {
+      "id": 1,
+      "description": "Buraco na rua",
+      "confirmIssue": 5,
+      "photo": {...},
+      "address": {...},
+      "reporter": {...},
+      "category": {...},
+      "severity": {...},
+      "status": {...}
+    }
+  ],
+  "page": 0,
+  "size": 20,
+  "totalElements": 1,
+  "totalPages": 1
 }
 ```
 
@@ -168,59 +177,46 @@ PUT /issues/confirm/{id}
 
 ---
 
-### 1.7. Listar Ocorrências por Categoria
+> Categoria, status e severidade não têm mais endpoints dedicados
+> (`/category/{id}`, `/status/{id}`, `/severity/{id}`) — use os query params
+> `categoryId`/`statusId`/`severityId` de **1.1**, combináveis com os demais.
+
+### 1.7. Métricas Agregadas por Cidade
 
 ```
-GET /issues/category/{categoryId}
+GET /issues/metrics
 ```
 
-**Parâmetros**:
-- `categoryId` (path) - ID da categoria
+**Descrição**: Retorna contagens agregadas de ocorrências de uma cidade — total, breakdown por status, top categorias, top bairros e breakdown por severidade. Usado pelo painel de métricas do mapa (`CityMetricsSheet`/`CityMetricsSidebar`) em vez de calcular tudo no client.
 
-**Descrição**: Retorna todas as ocorrências de uma categoria específica (ex: todas ocorrências de "Infraestrutura").
+**Query Params**:
+- `cityId` (long, **obrigatório**)
+- `neighborhood` (string, opcional) - restringe a um bairro específico
 
 **Resposta de Sucesso**: `200 OK`
-**Resposta de Erro**: `404 NOT FOUND`
+```json
+{
+  "cityId": 42,
+  "total": 87,
+  "byStatus": [{"name": "Aberto", "count": 30}, {"name": "Resolvido", "count": 57}],
+  "byCategory": [{"name": "Buraco no asfalto", "count": 20}],
+  "byNeighborhood": [{"name": "Centro", "count": 15}],
+  "bySeverity": [{"name": "Alto", "count": 10}, {"name": "Médio", "count": 40}, {"name": "Baixo", "count": 37}]
+}
+```
+`byCategory`/`byNeighborhood` retornam no máximo os 6 valores com mais ocorrências; `byStatus`/`bySeverity` retornam todos os valores que têm pelo menos uma ocorrência.
+
+**Resposta de Erro**: `400 BAD REQUEST` se `cityId` não for informado.
 
 ---
 
-### 1.8. Listar Ocorrências por Status
-
-```
-GET /issues/status/{statusId}
-```
-
-**Parâmetros**:
-- `statusId` (path) - ID do status
-
-**Descrição**: Filtra ocorrências por status (ex: todas as "Pendentes" ou "Resolvidas").
-
-**Resposta de Sucesso**: `200 OK`
-**Resposta de Erro**: `404 NOT FOUND`
-
----
-
-### 1.9. Listar Ocorrências por Severidade
-
-```
-GET /issues/severity/{severityId}
-```
-
-**Parâmetros**:
-- `severityId` (path) - ID da severidade
-
-**Descrição**: Filtra ocorrências por nível de severidade (ex: todas as "Críticas").
-
-**Resposta de Sucesso**: `200 OK`
-**Resposta de Erro**: `404 NOT FOUND`
-
----
-
-### 1.10. Listar Ocorrências por Denunciante
+### 1.8. Listar Ocorrências por Denunciante
 
 ```
 GET /issues/reporter/{reporterId}
 ```
+
+**Acesso**: Apenas `ADMIN`
 
 **Parâmetros**:
 - `reporterId` (path) - ID do usuário denunciante
@@ -232,7 +228,7 @@ GET /issues/reporter/{reporterId}
 
 ---
 
-### 1.11. Upload de Imagem para Cloudflare R2
+### 1.9. Upload de Imagem para Cloudflare R2
 
 ```
 POST /issues/image/upload

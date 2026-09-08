@@ -40,28 +40,16 @@ public interface AppMessages {
     String status_not_found();
 
     @Message
-    String no_issues_found_for_category();
-
-    @Message
-    String no_issues_found_for_status();
-
-    @Message
-    String no_issues_found_for_severity();
-
-    @Message
     String no_issues_found_for_reporter();
 
     @Message
     String no_issues_found_for_city(String cityName);
 
     @Message
-    String no_issues_found_for_address();
-
-    @Message
-    String address_parameters_required();
-
-    @Message
     String city_search_required();
+
+    @Message
+    String city_id_required();
 
     @Message
     String coordinates_required();
