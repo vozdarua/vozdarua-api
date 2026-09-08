@@ -60,12 +60,12 @@ public class IssueResource {
 
     @GET
     @PermitAll
-    public Response list() {
-        List<Issue> issues = Issue.listAll();
+    public Response list(@QueryParam("cityId") Long cityId) {
+        List<Issue> issues = cityId != null ? Issue.list("address.cityRef.id", cityId) : Issue.listAll();
         if(issues.isEmpty()) {
             return Response.status(Response.Status.NOT_FOUND).entity(new MessageResponse(appMessages.issue_not_found())).build();
         }
-        return Response.ok(Issue.listAll()).build();
+        return Response.ok(issues).build();
     }
 
     @PUT
@@ -171,8 +171,28 @@ public class IssueResource {
             issue.reporter = null;
         }
 
+        resolveCityState(issue.address);
+
         issue.persist();
         return Response.status(Response.Status.CREATED).entity(issue).build();
+    }
+
+    // Best-effort: links the free-text city/state to a real City/State row when the name
+    // matches (case-insensitive). Geocoded names don't always match a seeded city exactly
+    // (accents, spelling, or a neighborhood instead of the municipality), so a miss here
+    // must never block issue creation - it just leaves cityRef/stateRef null.
+    private void resolveCityState(Address address) {
+        if (Objects.isNull(address) || Objects.isNull(address.city) || address.city.isBlank()) {
+            return;
+        }
+        City match = (Objects.nonNull(address.state) && !address.state.isBlank())
+            ? City.find("LOWER(name) = LOWER(?1) and (LOWER(state.name) = LOWER(?2) or LOWER(state.uf) = LOWER(?2))",
+                         address.city, address.state).firstResult()
+            : City.find("LOWER(name) = LOWER(?1)", address.city).firstResult();
+        if (Objects.nonNull(match)) {
+            address.cityRef = match;
+            address.stateRef = match.state;
+        }
     }
 
     @PUT
@@ -283,25 +303,25 @@ public class IssueResource {
     @PermitAll
     @Path("/address")
     public Response listByAddress(
-            @QueryParam("city") String cityName,
-            @QueryParam("state") String state,
+            @QueryParam("cityId") Long cityId,
+            @QueryParam("stateId") Long stateId,
             @QueryParam("neighborhood") String neighborhood) {
 
         StringBuilder queryBuilder = new StringBuilder();
         Object[] params = new Object[3];
         int paramIndex = 0;
 
-        if (cityName != null && !cityName.isEmpty()) {
-            queryBuilder.append("address.city = ?").append(++paramIndex);
-            params[paramIndex - 1] = cityName;
+        if (cityId != null) {
+            queryBuilder.append("address.cityRef.id = ?").append(++paramIndex);
+            params[paramIndex - 1] = cityId;
         }
 
-        if (state != null && !state.isEmpty()) {
+        if (stateId != null) {
             if (!queryBuilder.isEmpty()) {
                 queryBuilder.append(" and ");
             }
-            queryBuilder.append("address.state = ?").append(++paramIndex);
-            params[paramIndex - 1] = state;
+            queryBuilder.append("address.stateRef.id = ?").append(++paramIndex);
+            params[paramIndex - 1] = stateId;
         }
 
         if (neighborhood != null && !neighborhood.isEmpty()) {

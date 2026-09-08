@@ -67,4 +67,18 @@ public class Issue extends PanacheEntity {
             .createQuery("SELECT i.reporter.id, i.reporter.phone, i.reporter.email, i.reporter.role, COUNT(i) FROM Issue i WHERE i.reporter IS NOT NULL GROUP BY i.reporter.id, i.reporter.phone, i.reporter.email, i.reporter.role ORDER BY COUNT(i) DESC LIMIT 5", Object[].class)
             .getResultList();
     }
+
+    // Only counts issues whose address.cityRef was resolved (best-effort match at creation
+    // time) - issues whose free-text city didn't match a seeded City are excluded here.
+    // Uses an explicit "LEFT JOIN i.status st" (not the dotted i.status.name path) so
+    // issues with a null status still count towards the total - a dotted path on a
+    // nullable association compiles to an inner join in JPQL and would silently drop
+    // them (same pitfall already noted in UserResource.meStats).
+    public static List<Object[]> rankingByCity() {
+        return getEntityManager()
+            .createQuery("SELECT c.id, c.name, s.uf, COUNT(i), SUM(CASE WHEN st.name = 'Resolvido' THEN 1L ELSE 0L END) " +
+                "FROM Issue i JOIN i.address a JOIN a.cityRef c JOIN c.state s LEFT JOIN i.status st " +
+                "GROUP BY c.id, c.name, s.uf ORDER BY COUNT(i) DESC LIMIT 10", Object[].class)
+            .getResultList();
+    }
 }

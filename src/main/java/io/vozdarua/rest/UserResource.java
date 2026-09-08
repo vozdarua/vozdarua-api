@@ -94,10 +94,10 @@ public class UserResource {
     @GET
     @RolesAllowed({Roles.USER, Roles.ADMIN})
     @Path("/me/stats")
-    public Response meStats(@QueryParam("city") String city, @Context SecurityContext securityContext) {
+    public Response meStats(@QueryParam("cityId") Long cityId, @Context SecurityContext securityContext) {
         String email = securityContext.getUserPrincipal().getName();
 
-        long inCity = (city != null && !city.isBlank()) ? Issue.count("address.city = ?1", city) : 0;
+        long inCity = cityId != null ? Issue.count("address.cityRef.id = ?1", cityId) : 0;
         long total = Issue.count("reporter.email", email);
         long resolved = Issue.count("reporter.email = ?1 and status.name = ?2", email, "Resolvido");
         // ponytail: "open" via total - resolved instead of "status is null or status.name != X" —

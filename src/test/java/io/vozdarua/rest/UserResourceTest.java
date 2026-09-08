@@ -1,6 +1,7 @@
 package io.vozdarua.rest;
 
 import io.vozdarua.model.entity.Address;
+import io.vozdarua.model.entity.City;
 import io.vozdarua.model.entity.Comment;
 import io.vozdarua.model.entity.Issue;
 import io.vozdarua.model.entity.Roles;
@@ -427,6 +428,10 @@ class UserResourceTest {
         address.latitude = -12.97;
         address.longitude = -38.5;
         address.city = "Salvador";
+        // This test builds the Address entity directly (not via POST /issues), so
+        // IssueResource's best-effort resolveCityState() never runs here - set cityRef
+        // by hand to simulate what a real create() call would have resolved.
+        address.cityRef = City.<City>find("name = ?1 and state.uf = ?2", "Salvador", "BA").firstResult();
         address.persist();
 
         Issue otherCityIssue = new Issue();
@@ -440,10 +445,11 @@ class UserResourceTest {
     @TestSecurity(user = "user@example.com", roles = {"USER"})
     void testMeStats() {
         createIssuesForStats();
+        Long salvadorCityId = City.<City>find("name = ?1 and state.uf = ?2", "Salvador", "BA").firstResult().id;
 
         given()
                 .when()
-                .get("/user/me/stats?city=Salvador")
+                .get("/user/me/stats?cityId=" + salvadorCityId)
                 .then()
                 .statusCode(200)
                 .body("resolved", equalTo(1))

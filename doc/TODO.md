@@ -14,7 +14,7 @@
   (usar `/issues`, não `/occurrences`, pra ficar consistente com o resto da API —
   o front vai precisar ajustar a URL quando isso existir).
 
-- [ ] **"Minhas ocorrências" (self-scoped).** `MinhasView.vue` já documenta no
+- [x] **"Minhas ocorrências" (self-scoped).** `MinhasView.vue` já documenta no
   próprio código (`MinhasView.vue:2-5`) que está esperando isso: hoje só existe
   `GET /issues/reporter/{id}`, restrito a `ADMIN`, e o campo `reporter` do
   `Issue` vem mascarado (`@SecureField(ADMIN)`) — um usuário comum nem consegue
@@ -34,11 +34,15 @@
   original já previa um `GET /metricas?cidade=X&bairro=Y` com esse shape
   (emAberto, resolvidas, topBairros, topCategorias etc.) — nunca foi implementado.
 
-- [ ] **Cidade como conceito real no backend.** Hoje `city` é só um campo texto
-  livre em `Address`, sem normalização. O front usa uma lista **hardcoded** de
-  ~65 cidades (`stores/cidade.js:15-86`) só pra alimentar o seletor de cidade.
-  Um `GET /cities` (com contagem de ocorrências por cidade) deixaria isso
-  consultável de verdade e mataria a lista hardcoded no front.
+- [x] **Cidade como conceito real no backend.** `City`/`State` agora são
+  entidades reais (seed com todas as ~5571 cidades do IBGE), `Address` ganhou
+  `cityRef`/`stateRef` (FK best-effort, resolvida a partir do texto livre
+  `city`/`state` que já existia — nunca bloqueia a criação da ocorrência se
+  não achar match). `GET /cities?search=` e `GET /cities/ranking` (contagem
+  agregada) substituem a lista hardcoded do front, e
+  `GET /location/cities/nearby?lat=&lng=` (via Geoapify) resolve "cidades
+  próximas" pela localização real do usuário em vez de distância entre as
+  ~65 cidades chumbadas.
 
 - [ ] **Paginação e filtros combináveis em `/issues`.** `GET /issues` carrega a
   tabela inteira sem paginação (`Issue.listAll()`), e os filtros

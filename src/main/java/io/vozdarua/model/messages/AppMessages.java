@@ -61,6 +61,12 @@ public interface AppMessages {
     String address_parameters_required();
 
     @Message
+    String city_search_required();
+
+    @Message
+    String coordinates_required();
+
+    @Message
     String r2_missing_file();
 
     @Message

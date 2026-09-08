@@ -47,4 +47,16 @@ class VozDaRuaUtilsTest {
         assertEquals(null, VozDaRuaUtils.maskEmail(null));
         assertEquals("   ", VozDaRuaUtils.maskEmail("   "));
     }
+
+    @Test
+    void haversineIsZeroForSamePoint() {
+        assertEquals(0.0, VozDaRuaUtils.haversineKm(-23.2237, -45.9009, -23.2237, -45.9009), 0.001);
+    }
+
+    @Test
+    void haversineMatchesKnownDistanceBetweenCities() {
+        // São José dos Campos -> Jacareí is ~11km in a straight line
+        double km = VozDaRuaUtils.haversineKm(-23.2237, -45.9009, -23.3053, -45.9658);
+        assertEquals(11.0, km, 1.0);
+    }
 }

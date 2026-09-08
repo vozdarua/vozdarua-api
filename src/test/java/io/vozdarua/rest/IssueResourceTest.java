@@ -25,6 +25,9 @@ class IssueResourceTest {
     private Long statusOpenId;
     private Long statusAnalyzingId;
     private Long statusResolvedId;
+    private Long sjcCityId;
+    private Long spStateId;
+    private Long rioCityId;
 
     @BeforeEach
     @Transactional
@@ -36,6 +39,13 @@ class IssueResourceTest {
         Address.deleteAll();
         Severity.deleteAll();
         Status.deleteAll();
+
+        // City/State are seeded reference data (V1.0.5), not test-owned - look up the
+        // rows the tests below need instead of creating/deleting them.
+        State spState = State.<State>find("uf", "SP").firstResult();
+        spStateId = spState.id;
+        sjcCityId = City.<City>find("name = ?1 and state = ?2", "São José dos Campos", spState).firstResult().id;
+        rioCityId = City.<City>find("name = ?1 and state.uf = ?2", "Rio de Janeiro", "RJ").firstResult().id;
 
         // Create test severities
         Severity severityHigh = new Severity();
@@ -379,7 +389,7 @@ class IssueResourceTest {
         createTestIssueViaAPI(false);
 
         given()
-                .queryParam("city", "São José dos Campos")
+                .queryParam("cityId", sjcCityId)
                 .when()
                 .get("/issues/address")
                 .then()
@@ -394,7 +404,7 @@ class IssueResourceTest {
         createTestIssueViaAPI(false);
 
         given()
-                .queryParam("state", "SP")
+                .queryParam("stateId", spStateId)
                 .when()
                 .get("/issues/address")
                 .then()
@@ -424,8 +434,8 @@ class IssueResourceTest {
         createTestIssueViaAPI(false);
 
         given()
-                .queryParam("city", "São José dos Campos")
-                .queryParam("state", "SP")
+                .queryParam("cityId", sjcCityId)
+                .queryParam("stateId", spStateId)
                 .when()
                 .get("/issues/address")
                 .then()
@@ -441,7 +451,7 @@ class IssueResourceTest {
         createTestIssueViaAPI(false);
 
         given()
-                .queryParam("city", "São José dos Campos")
+                .queryParam("cityId", sjcCityId)
                 .queryParam("neighborhood", "Cidade Morumbi")
                 .when()
                 .get("/issues/address")
@@ -458,7 +468,7 @@ class IssueResourceTest {
         createTestIssueViaAPI(false);
 
         given()
-                .queryParam("state", "SP")
+                .queryParam("stateId", spStateId)
                 .queryParam("neighborhood", "Cidade Morumbi")
                 .when()
                 .get("/issues/address")
@@ -475,8 +485,8 @@ class IssueResourceTest {
         createTestIssueViaAPI(false);
 
         given()
-                .queryParam("city", "São José dos Campos")
-                .queryParam("state", "SP")
+                .queryParam("cityId", sjcCityId)
+                .queryParam("stateId", spStateId)
                 .queryParam("neighborhood", "Cidade Morumbi")
                 .when()
                 .get("/issues/address")
@@ -494,7 +504,7 @@ class IssueResourceTest {
         createTestIssueViaAPI(false);
 
         given()
-                .queryParam("city", "Rio de Janeiro")
+                .queryParam("cityId", rioCityId)
                 .when()
                 .get("/issues/address")
                 .then()
@@ -515,8 +525,6 @@ class IssueResourceTest {
     @Order(23)
     void testListIssuesByAddressEmptyParameters() {
         given()
-                .queryParam("city", "")
-                .queryParam("state", "")
                 .queryParam("neighborhood", "")
                 .when()
                 .get("/issues/address")
@@ -563,7 +571,7 @@ class IssueResourceTest {
 
         // Query by city should return both
         given()
-                .queryParam("city", "São José dos Campos")
+                .queryParam("cityId", sjcCityId)
                 .when()
                 .get("/issues/address")
                 .then()
@@ -678,6 +686,73 @@ class IssueResourceTest {
                 .get("/issues/" + issueId)
                 .then()
                 .statusCode(404);
+    }
+
+    @Test
+    @Order(29)
+    void testCreateIssueResolvesCityRef() {
+        Long issueId = createTestIssueViaAPI(false);
+
+        given()
+                .when()
+                .get("/issues/" + issueId)
+                .then()
+                .statusCode(200)
+                .body("address.city", equalTo("São José dos Campos"))
+                .body("address.cityRef.name", equalTo("São José dos Campos"))
+                .body("address.cityRef.state.uf", equalTo("SP"))
+                .body("address.stateRef.uf", equalTo("SP"));
+    }
+
+    @Test
+    @Order(30)
+    public void testCreateIssueWithUnknownCityStillSucceeds() {
+        String issueJson = String.format("""
+            {
+                "description": "Buraco em cidade desconhecida",
+                "severity": {"id": %d},
+                "status": {"id": %d},
+                "confirmIssue": 0,
+                "category": {"id": %d},
+                "reporter": {"id": %d},
+                "address": {
+                     "latitude": -23.5505,
+                     "longitude": -46.6333,
+                     "cep": "12236-420",
+                     "street": "Rua Joana Soares Ferreira",
+                     "number": "662",
+                     "neighborhood": "Cidade Morumbi",
+                     "city": "Cidade Que Não Existe No Ibge",
+                     "state": "SP"
+                }
+            }
+            """, severityHighId, statusOpenId, categoryId, userId);
+
+        given()
+                .contentType(ContentType.JSON)
+                .body(issueJson)
+                .when()
+                .post("/issues")
+                .then()
+                .statusCode(201)
+                .body("address.city", equalTo("Cidade Que Não Existe No Ibge"))
+                .body("address.cityRef", nullValue());
+    }
+
+    @Test
+    @Order(31)
+    void testListIssuesFilteredByCityId() {
+        createTestIssueViaAPI(false); // São José dos Campos - resolves a cityRef
+        createTwoIssuesForAdmin(); // "Admin City" - doesn't match any seeded City
+
+        given()
+                .queryParam("cityId", sjcCityId)
+                .when()
+                .get("/issues")
+                .then()
+                .statusCode(200)
+                .body("$", hasSize(1))
+                .body("[0].address.city", equalTo("São José dos Campos"));
     }
 
     @Transactional
