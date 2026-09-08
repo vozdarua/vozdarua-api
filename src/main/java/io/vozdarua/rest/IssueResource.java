@@ -15,6 +15,7 @@ import io.vozdarua.utils.VozDaRuaUtils;
 import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
+import jakarta.persistence.PersistenceException;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
@@ -105,10 +106,22 @@ public class IssueResource {
     @PermitAll
     @Transactional
     @Path("{id}/confirm")
-    public Response confirmIssue(@PathParam("id") Long id) {
+    public Response confirmIssue(@PathParam("id") Long id, @Context SecurityContext securityContext,
+                                  @HeaderParam("X-Anon-Id") String anonId) {
         Issue issue = Issue.findByIdWithCategoryAndTags(id);
         if(Objects.isNull(issue)) {
             return Response.status(Response.Status.NOT_FOUND).entity(new MessageResponse(appMessages.issue_not_found())).build();
+        }
+
+        String identity = resolveIdentity(securityContext, anonId);
+        if(Objects.isNull(identity)) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(new MessageResponse(appMessages.identity_required())).build();
+        }
+        if(IssueAction.alreadyDone(id, identity, "CONFIRM")) {
+            return Response.ok(issue).build();
+        }
+        if(!recordAction(issue, identity, "CONFIRM")) {
+            return Response.ok(issue).build();
         }
 
         issue.confirmIssue = issue.confirmIssue + 1;
@@ -121,15 +134,55 @@ public class IssueResource {
     @PermitAll
     @Transactional
     @Path("{id}/resolve")
-    public Response resolveIssue(@PathParam("id") Long id) {
+    public Response resolveIssue(@PathParam("id") Long id, @Context SecurityContext securityContext,
+                                  @HeaderParam("X-Anon-Id") String anonId) {
         Issue issue = Issue.findById(id);
         if(Objects.isNull(issue)) {
             return Response.status(Response.Status.NOT_FOUND).entity(new MessageResponse(appMessages.issue_not_found())).build();
         }
+
+        String identity = resolveIdentity(securityContext, anonId);
+        if(Objects.isNull(identity)) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(new MessageResponse(appMessages.identity_required())).build();
+        }
+        if(IssueAction.alreadyDone(id, identity, "RESOLVE")) {
+            return Response.ok(issue).build();
+        }
+        if(!recordAction(issue, identity, "RESOLVE")) {
+            return Response.ok(issue).build();
+        }
+
         issue.status = Status.find("name", "Resolvido").firstResult();
         issue.confirmResolve = issue.confirmResolve + 1;
         issue.persist();
         return Response.ok(issue).build();
+    }
+
+    // Authenticated users are identified by their JWT subject; anonymous users by a
+    // per-device id the frontend generates once and persists (see api.js). No identity
+    // at all (no session, no header) means we can't dedupe, so the caller must refuse.
+    private String resolveIdentity(SecurityContext securityContext, String anonId) {
+        if(Objects.nonNull(securityContext.getUserPrincipal())) {
+            return "u:" + securityContext.getUserPrincipal().getName();
+        }
+        if(Objects.nonNull(anonId) && !anonId.isBlank()) {
+            return "d:" + anonId.trim();
+        }
+        return null;
+    }
+
+    // ponytail: check-then-insert has a race window between IssueAction.alreadyDone() and this
+    // persist — the unique DB constraint is the real guard. persistAndFlush() surfaces a
+    // concurrent duplicate here (instead of at end-of-transaction) so we can treat it the same
+    // as "already done" rather than a 500. Upgrade to a single atomic upsert if this endpoint
+    // ever sees real concurrent traffic per issue.
+    private boolean recordAction(Issue issue, String identity, String action) {
+        try {
+            new IssueAction(issue, identity, action).persistAndFlush();
+            return true;
+        } catch (PersistenceException e) {
+            return false;
+        }
     }
 
     @GET

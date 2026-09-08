@@ -104,4 +104,7 @@ public interface AppMessages {
 
     @Message
     String email_recovery_ignore();
+
+    @Message
+    String identity_required();
 }

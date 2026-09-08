@@ -381,11 +381,47 @@ class IssueResourceTest {
         Long issueId = createTestIssueViaAPI(false);
         given()
                 .contentType(ContentType.JSON)
+                .header("X-Anon-Id", "device-1")
                 .when()
                 .put("/issues/" + issueId + "/confirm/")
                 .then()
                 .statusCode(200)
                 .body("confirmIssue", equalTo(1));
+    }
+
+    @Test
+    @Order(20)
+    void testConfirmIssueTwiceBySameDeviceDoesNotDoubleCount() {
+        Long issueId = createTestIssueViaAPI(false);
+        given()
+                .contentType(ContentType.JSON)
+                .header("X-Anon-Id", "device-1")
+                .when()
+                .put("/issues/" + issueId + "/confirm/")
+                .then()
+                .statusCode(200)
+                .body("confirmIssue", equalTo(1));
+
+        given()
+                .contentType(ContentType.JSON)
+                .header("X-Anon-Id", "device-1")
+                .when()
+                .put("/issues/" + issueId + "/confirm/")
+                .then()
+                .statusCode(200)
+                .body("confirmIssue", equalTo(1));
+    }
+
+    @Test
+    @Order(21)
+    void testConfirmIssueWithoutIdentityIsRejected() {
+        Long issueId = createTestIssueViaAPI(false);
+        given()
+                .contentType(ContentType.JSON)
+                .when()
+                .put("/issues/" + issueId + "/confirm/")
+                .then()
+                .statusCode(400);
     }
 
     @Test
@@ -582,12 +618,36 @@ class IssueResourceTest {
         Long issueId = createTestIssueViaAPI(false);
         given()
                 .contentType(ContentType.JSON)
+                .header("X-Anon-Id", "device-1")
                 .when()
                 .put("/issues/" + issueId + "/resolve/")
                 .then()
                 .statusCode(200)
                 .body("status.id", equalTo(statusResolvedId.intValue()))
                 .body("status.name", equalTo("Resolvido"))
+                .body("confirmResolve", equalTo(1));
+    }
+
+    @Test
+    @Order(22)
+    void testResolveIssueTwiceBySameDeviceDoesNotDoubleCount() {
+        Long issueId = createTestIssueViaAPI(false);
+        given()
+                .contentType(ContentType.JSON)
+                .header("X-Anon-Id", "device-1")
+                .when()
+                .put("/issues/" + issueId + "/resolve/")
+                .then()
+                .statusCode(200)
+                .body("confirmResolve", equalTo(1));
+
+        given()
+                .contentType(ContentType.JSON)
+                .header("X-Anon-Id", "device-1")
+                .when()
+                .put("/issues/" + issueId + "/resolve/")
+                .then()
+                .statusCode(200)
                 .body("confirmResolve", equalTo(1));
     }
 
