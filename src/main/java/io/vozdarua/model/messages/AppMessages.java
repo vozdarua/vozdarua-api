@@ -106,5 +106,14 @@ public interface AppMessages {
     String email_recovery_subject();
 
     @Message
-    String email_recovery_text(String url);
+    String email_recovery_greeting();
+
+    @Message
+    String email_recovery_button();
+
+    @Message
+    String email_recovery_expiry();
+
+    @Message
+    String email_recovery_ignore();
 }

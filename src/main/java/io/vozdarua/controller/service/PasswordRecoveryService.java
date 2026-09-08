@@ -1,5 +1,6 @@
 package io.vozdarua.controller.service;
 
+import io.quarkus.qute.Template;
 import io.vozdarua.config.RequestLocale;
 import io.vozdarua.model.dto.MessageResponse;
 import io.vozdarua.model.entity.PasswordResetToken;
@@ -26,6 +27,9 @@ public class PasswordRecoveryService {
 
     @Inject
     EmailService emailService;
+
+    @Inject
+    Template passwordRecoveryTemplate;
 
     @Transactional
     public Response createRecoveryToken(String email) {
@@ -58,7 +62,16 @@ public class PasswordRecoveryService {
 
         // Send Email
         String resetUrl = frontendUrl + "/reset-password?token=" + token.token;
-        emailService.send(email, appMessages.email_recovery_text(resetUrl), appMessages.email_recovery_subject());
+        String subject = appMessages.email_recovery_subject();
+        String body = passwordRecoveryTemplate
+                .data("subject", subject)
+                .data("greeting", appMessages.email_recovery_greeting())
+                .data("url", resetUrl)
+                .data("buttonLabel", appMessages.email_recovery_button())
+                .data("expiryNote", appMessages.email_recovery_expiry())
+                .data("ignoreNote", appMessages.email_recovery_ignore())
+                .render();
+        emailService.send(email, body, subject);
 
         return Response.ok(new MessageResponse(appMessages.recovery_email_sent()))
                 .build();
