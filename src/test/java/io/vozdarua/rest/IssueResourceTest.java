@@ -662,9 +662,9 @@ class IssueResourceTest {
                 .then()
                 .statusCode(200)
                 .body("$", hasSize(2))
-                .body("[0].issueCount", equalTo(3))
+                .body("[0].total", equalTo(3))
                 .body("[0].email", equalTo("test..."))
-                .body("[1].issueCount", equalTo(2))
+                .body("[1].total", equalTo(2))
                 .body("[1].email", equalTo("admin2..."));
     }
 
@@ -753,6 +753,23 @@ class IssueResourceTest {
                 .statusCode(200)
                 .body("$", hasSize(1))
                 .body("[0].address.city", equalTo("São José dos Campos"));
+    }
+
+    @Test
+    @Order(32)
+    void testRankingFilteredByCityId() {
+        createTestIssueViaAPI(false); // São José dos Campos - resolves a cityRef
+        createTwoIssuesForAdmin(); // "Admin City" - doesn't match any seeded City
+
+        given()
+                .queryParam("cityId", sjcCityId)
+                .when()
+                .get("/issues/ranking")
+                .then()
+                .statusCode(200)
+                .body("$", hasSize(1))
+                .body("[0].email", equalTo("test..."))
+                .body("[0].total", equalTo(1));
     }
 
     @Transactional

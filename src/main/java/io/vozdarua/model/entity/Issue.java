@@ -62,10 +62,30 @@ public class Issue extends PanacheEntity {
         return Issue.find("SELECT i FROM Issue i LEFT JOIN FETCH i.status s WHERE i.id = ?1", id).firstResult();
     }
 
-    public static List<Object[]> rankingByReporter() {
-        return getEntityManager()
-            .createQuery("SELECT i.reporter.id, i.reporter.phone, i.reporter.email, i.reporter.role, COUNT(i) FROM Issue i WHERE i.reporter IS NOT NULL GROUP BY i.reporter.id, i.reporter.phone, i.reporter.email, i.reporter.role ORDER BY COUNT(i) DESC LIMIT 5", Object[].class)
-            .getResultList();
+    // cityId filters to issues resolved to that city (same best-effort address.cityRef
+    // as rankingByCity below); null means global ranking. Uses "LEFT JOIN i.status st"
+    // for the same reason as rankingByCity - a dotted i.status.name path would drop
+    // issues with a null status via an implicit inner join.
+    public static List<Object[]> rankingByReporter(Long cityId) {
+        StringBuilder jpql = new StringBuilder(
+            "SELECT i.reporter.id, i.reporter.phone, i.reporter.email, i.reporter.role, " +
+            "COUNT(i), SUM(CASE WHEN st.name = 'Resolvido' THEN 1L ELSE 0L END) " +
+            "FROM Issue i LEFT JOIN i.status st ");
+        if (cityId != null) {
+            jpql.append("JOIN i.address a JOIN a.cityRef c ");
+        }
+        jpql.append("WHERE i.reporter IS NOT NULL ");
+        if (cityId != null) {
+            jpql.append("AND c.id = :cityId ");
+        }
+        jpql.append("GROUP BY i.reporter.id, i.reporter.phone, i.reporter.email, i.reporter.role ")
+            .append("ORDER BY COUNT(i) DESC LIMIT 10");
+
+        var query = getEntityManager().createQuery(jpql.toString(), Object[].class);
+        if (cityId != null) {
+            query.setParameter("cityId", cityId);
+        }
+        return query.getResultList();
     }
 
     // Only counts issues whose address.cityRef was resolved (best-effort match at creation

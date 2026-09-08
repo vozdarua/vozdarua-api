@@ -50,10 +50,12 @@
   separados que não combinam entre si (ex: não dá pra filtrar categoria + cidade
   numa única chamada). Vira gargalo assim que o volume de ocorrências crescer.
 
-- [ ] **Ranking por cidade.** `GET /issues/ranking` hoje só retorna top-5
-  usuários por contagem, sem filtro de cidade. `RankingView.vue` calcula
-  "top cidades" no client (`RankingView.vue:12-55`) por falta de um endpoint
-  equivalente no backend.
+- [x] **Ranking por cidade.** `GET /issues/ranking?cityId=` agora aceita um
+  filtro opcional de cidade (mesmo padrão de `rankingByCity`), e passou a
+  retornar também a contagem de resolvidas (`total`/`resolved`, igual ao
+  `/cities/ranking`). `RankingView.vue` não calcula mais o ranking de
+  contribuidores no client — o cálculo anterior usava `oc.user` (campo que
+  não existe na API, é `reporter`), então nunca funcionava de verdade.
 
 ## 🟢 Baixa prioridade / opcional
 

@@ -5,7 +5,7 @@ import io.vozdarua.controller.restclient.GeocodingClient;
 import io.vozdarua.model.dto.MessageResponse;
 import io.vozdarua.model.dto.GeoResponse;
 import io.vozdarua.model.dto.ImageUploadForm;
-import io.vozdarua.model.dto.UserDTO;
+import io.vozdarua.model.dto.ContributorRankingDTO;
 import io.vozdarua.model.entity.*;
 import io.vozdarua.model.messages.AppMessages;
 import io.vozdarua.ratelimit.RateLimited;
@@ -402,9 +402,10 @@ public class IssueResource {
     @GET
     @PermitAll
     @Path("/ranking")
-    public Response ranking() {
-        List<UserDTO> ranking = Issue.rankingByReporter().stream()
-            .map(row -> new UserDTO((Long) row[0], (String) row[1], VozDaRuaUtils.maskEmail((String) row[2]), (String) row[3], (Long) row[4]))
+    public Response ranking(@QueryParam("cityId") Long cityId) {
+        List<ContributorRankingDTO> ranking = Issue.rankingByReporter(cityId).stream()
+            .map(row -> new ContributorRankingDTO((Long) row[0], (String) row[1],
+                VozDaRuaUtils.maskEmail((String) row[2]), (String) row[3], (Long) row[4], (Long) row[5]))
             .toList();
         return Response.ok(ranking).build();
     }
