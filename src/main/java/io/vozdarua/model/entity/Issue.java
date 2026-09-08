@@ -79,7 +79,7 @@ public class Issue extends PanacheEntity {
             jpql.append("AND c.id = :cityId ");
         }
         jpql.append("GROUP BY i.reporter.id, i.reporter.phone, i.reporter.email, i.reporter.role ")
-            .append("ORDER BY COUNT(i) DESC LIMIT 10");
+            .append("ORDER BY COUNT(i) DESC, i.reporter.id ASC LIMIT 10");
 
         var query = getEntityManager().createQuery(jpql.toString(), Object[].class);
         if (cityId != null) {
@@ -98,7 +98,7 @@ public class Issue extends PanacheEntity {
         return getEntityManager()
             .createQuery("SELECT c.id, c.name, s.uf, COUNT(i), SUM(CASE WHEN st.name = 'Resolvido' THEN 1L ELSE 0L END) " +
                 "FROM Issue i JOIN i.address a JOIN a.cityRef c JOIN c.state s LEFT JOIN i.status st " +
-                "GROUP BY c.id, c.name, s.uf ORDER BY COUNT(i) DESC LIMIT 10", Object[].class)
+                "GROUP BY c.id, c.name, s.uf ORDER BY COUNT(i) DESC, c.id ASC LIMIT 10", Object[].class)
             .getResultList();
     }
 }
