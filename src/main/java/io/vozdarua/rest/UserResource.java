@@ -9,6 +9,7 @@ import io.vozdarua.model.dto.IssueDTO;
 import io.vozdarua.model.dto.MessageResponse;
 import io.vozdarua.model.dto.UserDTO;
 import io.vozdarua.model.dto.UserStatsDTO;
+import io.vozdarua.model.entity.Comment;
 import io.vozdarua.model.entity.Issue;
 import io.vozdarua.model.entity.PasswordResetToken;
 import io.vozdarua.model.entity.Roles;
@@ -116,6 +117,26 @@ public class UserResource {
                 .map(IssueDTO::toIssueDTO)
                 .toList();
         return Response.ok(issues).build();
+    }
+
+    @DELETE
+    @Transactional
+    @Path("/me/issues/{id}")
+    @RolesAllowed({Roles.USER, Roles.ADMIN})
+    public Response deleteMyIssue(@PathParam("id") Long id, @Context SecurityContext securityContext) {
+        Issue issue = Issue.findById(id);
+        if (issue == null) {
+            return Response.status(Response.Status.NOT_FOUND).entity(new MessageResponse(appMessages.issue_not_found())).build();
+        }
+
+        String email = securityContext.getUserPrincipal().getName();
+        if (Objects.isNull(issue.reporter) || !issue.reporter.email.equals(email)) {
+            return Response.status(Response.Status.NOT_ACCEPTABLE).entity(new MessageResponse(appMessages.delete_other_user_issue())).build();
+        }
+
+        Comment.delete("issue.id", id);
+        issue.delete();
+        return Response.noContent().build();
     }
 
     @DELETE

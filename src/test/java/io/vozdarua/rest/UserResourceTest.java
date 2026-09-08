@@ -1,6 +1,7 @@
 package io.vozdarua.rest;
 
 import io.vozdarua.model.entity.Address;
+import io.vozdarua.model.entity.Comment;
 import io.vozdarua.model.entity.Issue;
 import io.vozdarua.model.entity.Roles;
 import io.vozdarua.model.entity.Status;
@@ -501,5 +502,74 @@ class UserResourceTest {
                 .then()
                 .statusCode(200)
                 .body("$", hasSize(0));
+    }
+
+    // ==================== DELETE MY ISSUE TESTS ====================
+
+    @Transactional
+    void persistCommentFor(Issue issue) {
+        Comment comment = new Comment();
+        comment.text = "Também aconteceu comigo";
+        comment.issue = issue;
+        comment.persist();
+    }
+
+    @Test
+    @Order(21)
+    @TestSecurity(user = "user@example.com", roles = {"USER"})
+    void testDeleteOwnIssue() {
+        Issue issue = persistIssueFor(User.findById(regularUserId));
+
+        given()
+                .when()
+                .delete("/user/me/issues/" + issue.id)
+                .then()
+                .statusCode(204);
+
+        Assertions.assertNull(Issue.findById(issue.id));
+    }
+
+    @Test
+    @Order(22)
+    @TestSecurity(user = "user@example.com", roles = {"USER"})
+    void testDeleteOwnIssueWithCommentsAttached() {
+        Issue issue = persistIssueFor(User.findById(regularUserId));
+        persistCommentFor(issue);
+
+        given()
+                .when()
+                .delete("/user/me/issues/" + issue.id)
+                .then()
+                .statusCode(204);
+
+        Assertions.assertNull(Issue.findById(issue.id));
+    }
+
+    @Test
+    @Order(23)
+    @TestSecurity(user = "another@example.com", roles = {"USER"})
+    void testCannotDeleteAnotherUsersIssue() {
+        Issue issue = persistIssueFor(User.findById(regularUserId));
+
+        given()
+                .when()
+                .delete("/user/me/issues/" + issue.id)
+                .then()
+                .statusCode(406)
+                .body("message", notNullValue());
+
+        Assertions.assertNotNull(Issue.findById(issue.id));
+    }
+
+    @Test
+    @Order(24)
+    @TestSecurity(user = "user@example.com", roles = {"USER"})
+    void testDeleteNonExistentIssue() {
+        given()
+                .when()
+                .delete("/user/me/issues/99999")
+                .then()
+                .statusCode(404)
+                .body("message", notNullValue());
     }
 }

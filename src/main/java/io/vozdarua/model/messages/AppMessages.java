@@ -73,6 +73,9 @@ public interface AppMessages {
     String edit_other_user_issue();
 
     @Message
+    String delete_other_user_issue();
+
+    @Message
     String coordenates_not_found();
 
     @Message

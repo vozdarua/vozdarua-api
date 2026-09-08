@@ -659,6 +659,34 @@ class IssueResourceTest {
                 .body("[1].email", equalTo("admin2..."));
     }
 
+    @Test
+    @Order(28)
+    @TestSecurity(user = "admin@example.com", roles = {"ADMIN"})
+    void testDeleteIssueWithCommentsAttached() {
+        Long issueId = createTestIssueViaAPI(true);
+        persistCommentFor(issueId);
+
+        given()
+                .when()
+                .delete("/issues/" + issueId)
+                .then()
+                .statusCode(204);
+
+        given()
+                .when()
+                .get("/issues/" + issueId)
+                .then()
+                .statusCode(404);
+    }
+
+    @Transactional
+    void persistCommentFor(Long issueId) {
+        Comment comment = new Comment();
+        comment.text = "Também aconteceu comigo";
+        comment.issue = Issue.findById(issueId);
+        comment.persist();
+    }
+
     @Transactional
     Long createTwoIssuesForAdmin() {
         User admin = new User();

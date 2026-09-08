@@ -227,6 +227,7 @@ public class IssueResource {
         if (issue == null) {
             return Response.status(Response.Status.NOT_FOUND).entity(new MessageResponse(appMessages.issue_not_found())).build();
         }
+        Comment.delete("issue.id", id);
         issue.delete();
         return Response.noContent().build();
     }
