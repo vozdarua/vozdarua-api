@@ -183,6 +183,7 @@ The project uses English in code but targets Brazilian Portuguese users:
 | Severity | Severidade/Gravidade | Severity level |
 | Status | Status/Estado | Current state |
 | confirmIssue | Confirmações | Community confirmation counter |
+| confirmResolve | Confirmações de resolução | Community resolution counter |
 
 See `doc/GLOSSARY.md` for complete term mappings.
 

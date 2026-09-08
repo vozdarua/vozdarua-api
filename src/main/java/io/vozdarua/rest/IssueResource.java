@@ -94,6 +94,8 @@ public class IssueResource {
             return Response.status(Response.Status.NOT_FOUND).entity(new MessageResponse(appMessages.issue_not_found())).build();
         }
         issue.status = Status.find("name", "Resolvido").firstResult();
+        issue.confirmResolve = issue.confirmResolve + 1;
+        issue.persist();
         return Response.ok(issue).build();
     }
 
@@ -192,6 +194,7 @@ public class IssueResource {
 
         issue.description = VozDaRuaUtils.verifyNull(issue.description, updatedIssue.description);
         issue.confirmIssue = VozDaRuaUtils.verifyNull(issue.confirmIssue, updatedIssue.confirmIssue);
+        issue.confirmResolve = VozDaRuaUtils.verifyNull(issue.confirmResolve, updatedIssue.confirmResolve);
         issue.category = VozDaRuaUtils.verifyNull(issue.category, updatedIssue.category);
         issue.photo = VozDaRuaUtils.verifyNull(issue.photo, updatedIssue.photo);
         issue.reporter = VozDaRuaUtils.verifyNull(issue.reporter, updatedIssue.reporter);;

@@ -633,7 +633,8 @@ class IssueResourceTest {
                 .then()
                 .statusCode(200)
                 .body("status.id", equalTo(statusResolvedId.intValue()))
-                .body("status.name", equalTo("Resolvido"));
+                .body("status.name", equalTo("Resolvido"))
+                .body("confirmResolve", equalTo(1));
     }
 
     @Test

@@ -26,6 +26,8 @@ public class Issue extends PanacheEntity {
 
     public Integer confirmIssue = 0;
 
+    public Integer confirmResolve = 0;
+
     public boolean anonymous;
 
     @ManyToOne

@@ -50,6 +50,7 @@ Este glossário apresenta a tradução dos termos utilizados na API e no código
 | `createdAt` | `criadoEm` | Data/hora de criação |
 | `updatedAt` | `atualizadoEm` | Data/hora da última atualização |
 | `confirmIssue` | `confirmacoesOcorrencia` | Contador de confirmações da ocorrência |
+| `confirmResolve` | `confirmacoesResolucao` | Contador de confirmações de resolução da ocorrência |
 
 ## Status da Ocorrência (Exemplos)
 
