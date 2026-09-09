@@ -1,5 +1,6 @@
 package io.vozdarua.config;
 
+import io.vozdarua.utils.VozDaRuaUtils;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.container.ContainerResponseContext;
@@ -26,7 +27,9 @@ public class RequestIdFilter implements ContainerRequestFilter, ContainerRespons
         MDC.put(REQUEST_ID, UUID.randomUUID().toString());
         if (Objects.nonNull(requestContext.getSecurityContext())
                 && Objects.nonNull(requestContext.getSecurityContext().getUserPrincipal())) {
-            MDC.put(USER_ID, requestContext.getSecurityContext().getUserPrincipal().getName());
+            // O JWT subject aqui é o email do usuário - mascarado porque o MDC vai pra
+            // toda linha de log de request autenticado (stdout do Railway, terceiro).
+            MDC.put(USER_ID, VozDaRuaUtils.maskEmail(requestContext.getSecurityContext().getUserPrincipal().getName()));
         }
     }
 

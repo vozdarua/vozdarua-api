@@ -10,6 +10,7 @@ import io.vozdarua.model.entity.PasswordResetToken;
 import io.vozdarua.model.entity.User;
 import io.vozdarua.model.messages.AppMessages;
 import io.vozdarua.ratelimit.RateLimited;
+import io.vozdarua.utils.VozDaRuaUtils;
 import jakarta.annotation.security.PermitAll;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -50,11 +51,11 @@ public class AuthResource {
 
         User user = User.find("email", request.email()).firstResult();
         if (Objects.nonNull(user) && BcryptUtil.matches(request.password(), user.password)) {
-            LOGGER.debugf("Login bem-sucedido: %s", request.email());
+            LOGGER.debugf("Login bem-sucedido: %s", VozDaRuaUtils.maskEmail(request.email()));
             return Response.ok(accountService.token(user)).build();
         }
 
-        LOGGER.warnf("Login falhou: %s", request.email());
+        LOGGER.warnf("Login falhou: %s", VozDaRuaUtils.maskEmail(request.email()));
         return Response.status(Response.Status.UNAUTHORIZED).build();
     }
 
@@ -77,7 +78,7 @@ public class AuthResource {
 
         token.delete();
 
-        LOGGER.infof("Senha redefinida: %s", user.email);
+        LOGGER.infof("Senha redefinida: %s", VozDaRuaUtils.maskEmail(user.email));
         return Response.status(Response.Status.CREATED).entity(accountService.token(user)).build();
     }
 

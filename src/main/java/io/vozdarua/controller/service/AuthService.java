@@ -5,6 +5,7 @@ import io.smallrye.jwt.build.Jwt;
 import io.vozdarua.model.dto.AuthResponse;
 import io.vozdarua.model.entity.Roles;
 import io.vozdarua.model.entity.User;
+import io.vozdarua.utils.VozDaRuaUtils;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -24,7 +25,7 @@ public class AuthService {
         user.password = BcryptUtil.bcryptHash(user.password);
         user.role = Roles.USER;
         user.persist();
-        LOGGER.infof("Usuário cadastrado: %s", user.email);
+        LOGGER.infof("Usuário cadastrado: %s", VozDaRuaUtils.maskEmail(user.email));
     }
 
     public AuthResponse token(User user) {

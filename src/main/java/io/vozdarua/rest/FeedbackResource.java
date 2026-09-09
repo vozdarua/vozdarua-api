@@ -6,6 +6,7 @@ import io.vozdarua.controller.restclient.dto.ResendPayload;
 import io.vozdarua.controller.service.EmailService;
 import io.vozdarua.model.entity.Feedback;
 import io.vozdarua.ratelimit.RateLimited;
+import io.vozdarua.utils.VozDaRuaUtils;
 import jakarta.annotation.security.PermitAll;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -43,7 +44,7 @@ public class FeedbackResource {
     public Response create(@Valid Feedback feedback) {
         sendEmail(feedback);
         feedback.persist();
-        LOGGER.infof("Feedback recebido: type=%s email=%s", feedback.type, feedback.email);
+        LOGGER.infof("Feedback recebido: type=%s email=%s", feedback.type, VozDaRuaUtils.maskEmail(feedback.email));
         return Response.status(Response.Status.CREATED).build();
     }
 

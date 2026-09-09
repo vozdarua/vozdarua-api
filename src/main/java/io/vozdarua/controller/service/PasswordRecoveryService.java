@@ -6,6 +6,7 @@ import io.vozdarua.model.dto.MessageResponse;
 import io.vozdarua.model.entity.PasswordResetToken;
 import io.vozdarua.model.entity.User;
 import io.vozdarua.model.messages.AppMessages;
+import io.vozdarua.utils.VozDaRuaUtils;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -39,15 +40,16 @@ public class PasswordRecoveryService {
         User user = User.find("email", email).firstResult();
         if (user == null) {
             // Não revela se o e-mail existe: mesma resposta do caminho feliz, só que
-            // sem gerar token nem enviar e-mail de verdade.
-            LOGGER.debugf("Recuperação de senha pedida pra email não cadastrado: %s", email);
+            // sem gerar token nem enviar e-mail de verdade. Sem log aqui de propósito - um log
+            // que só dispara nesse branch vira um canal de enumeração de email via log,
+            // exatamente o que a resposta idêntica acima já existe pra evitar.
             return Response.ok(new MessageResponse(appMessages.recovery_email_sent())).build();
         }
 
         // Check if they already requested one recently
         LocalDateTime cooldownLimit = LocalDateTime.now().minusMinutes(1);
         if (user.lastResetRequest != null && user.lastResetRequest.isAfter(cooldownLimit)) {
-            LOGGER.warnf("Recuperação de senha em cooldown: %s", email);
+            LOGGER.warnf("Recuperação de senha em cooldown: %s", VozDaRuaUtils.maskEmail(email));
             return Response.status(Response.Status.BAD_REQUEST).entity(new MessageResponse(appMessages.token_limit_rate())).build();
         }
 
@@ -77,7 +79,7 @@ public class PasswordRecoveryService {
                 .data("ignoreNote", appMessages.email_recovery_ignore())
                 .render();
         emailService.send(email, body, subject);
-        LOGGER.infof("Email de recuperação de senha enviado: %s", email);
+        LOGGER.infof("Email de recuperação de senha enviado: %s", VozDaRuaUtils.maskEmail(email));
 
         return Response.ok(new MessageResponse(appMessages.recovery_email_sent()))
                 .build();

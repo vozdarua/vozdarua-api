@@ -3,6 +3,7 @@ package io.vozdarua.controller.service;
 import io.quarkus.qute.Template;
 import io.vozdarua.controller.restclient.ResendClient;
 import io.vozdarua.controller.restclient.dto.ResendPayload;
+import io.vozdarua.utils.VozDaRuaUtils;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -33,7 +34,7 @@ public class EmailService {
         } catch (Exception e) {
             // Loga com o contexto (destinatário/assunto) e relança - quem chamou decide a
             // resposta HTTP; sem isso a falha desaparecia sem rastro nenhum.
-            LOGGER.errorf(e, "Falha ao enviar email '%s' pra %s", subject, to);
+            LOGGER.errorf(e, "Falha ao enviar email '%s' pra %s", subject, VozDaRuaUtils.maskEmail(to));
             throw e;
         }
     }

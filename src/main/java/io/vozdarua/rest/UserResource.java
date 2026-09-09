@@ -16,6 +16,7 @@ import io.vozdarua.model.entity.Roles;
 import io.vozdarua.model.entity.User;
 import io.vozdarua.model.messages.AppMessages;
 import io.vozdarua.ratelimit.RateLimited;
+import io.vozdarua.utils.VozDaRuaUtils;
 import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
@@ -81,7 +82,7 @@ public class UserResource {
         user.password = BcryptUtil.bcryptHash(updatedUser.password);
 
         user.persist();
-        LOGGER.infof("Usuário atualizado: id=%d email=%s", id, user.email);
+        LOGGER.infof("Usuário atualizado: id=%d email=%s", id, VozDaRuaUtils.maskEmail(user.email));
         return Response.status(Response.Status.CREATED).entity(UserDTO.toUserDTO(user, Issue.count("reporter.email", user.email))).build();
 
     }
@@ -140,7 +141,7 @@ public class UserResource {
 
         Comment.delete("issue.id", id);
         issue.delete();
-        LOGGER.infof("Issue removida pelo autor: id=%d email=%s", id, email);
+        LOGGER.infof("Issue removida pelo autor: id=%d email=%s", id, VozDaRuaUtils.maskEmail(email));
         return Response.noContent().build();
     }
 
@@ -163,7 +164,7 @@ public class UserResource {
         }
 
         user.delete();
-        LOGGER.infof("Usuário removido: id=%d email=%s", id, user.email);
+        LOGGER.infof("Usuário removido: id=%d email=%s", id, VozDaRuaUtils.maskEmail(user.email));
         return  Response.noContent().build();
     }
 
