@@ -25,6 +25,7 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.SecurityContext;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
+import org.jboss.logging.Logger;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
@@ -41,6 +42,8 @@ import java.util.UUID;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class IssueResource {
+
+    private static final Logger LOGGER = Logger.getLogger(IssueResource.class);
 
     @Inject
     @RequestLocale
@@ -181,6 +184,8 @@ public class IssueResource {
             new IssueAction(issue, identity, action).persistAndFlush();
             return true;
         } catch (PersistenceException e) {
+            // Esperado pelo comment acima (race com o unique constraint) - WARN, não ERROR.
+            LOGGER.warnf("Ação %s duplicada (race) pra issue=%d identity=%s", action, issue.id, identity);
             return false;
         }
     }
@@ -217,7 +222,11 @@ public class IssueResource {
         if(Objects.isNull(issue.address.latitude) || Objects.isNull(issue.address.longitude)) {
             Optional<GeoResponse> geoResponse = getGeoResponse(issue.address);
             if(geoResponse.isEmpty()) {
-                return Response.noContent().entity(new MessageResponse(appMessages.coordenates_not_found())).build();
+                LOGGER.warnf("Nenhuma coordenada encontrada ao criar issue: %s", issue.address);
+                // 204 (noContent) proíbe corpo na resposta por spec HTTP - a entity() nunca
+                // chegava ao cliente. NOT_FOUND com MessageResponse é o padrão usado no resto da classe.
+                return Response.status(Response.Status.NOT_FOUND)
+                        .entity(new MessageResponse(appMessages.coordenates_not_found())).build();
             }
 
             issue.address.latitude = Double.parseDouble(geoResponse.get().lat());
@@ -396,6 +405,7 @@ public class IssueResource {
             return Response.ok(image).build();
 
         } catch (Exception e) {
+            LOGGER.errorf(e, "Falha ao subir imagem pro R2: key=%s", fileKey);
             return Response.serverError().entity(new MessageResponse(appMessages.r2_upload_file(e.getMessage()))).build();
         }
     }

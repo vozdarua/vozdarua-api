@@ -18,11 +18,14 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
+import org.jboss.logging.Logger;
 
 @Path("/feedback")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class FeedbackResource {
+
+    private static final Logger LOGGER = Logger.getLogger(FeedbackResource.class);
 
     @ConfigProperty(name = "resend.email.vozdarua")
     String toVozDaRua;
@@ -40,6 +43,7 @@ public class FeedbackResource {
     public Response create(@Valid Feedback feedback) {
         sendEmail(feedback);
         feedback.persist();
+        LOGGER.infof("Feedback recebido: type=%s email=%s", feedback.type, feedback.email);
         return Response.status(Response.Status.CREATED).build();
     }
 

@@ -11,12 +11,15 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.jboss.logging.Logger;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @ApplicationScoped
 public class PasswordRecoveryService {
+
+    private static final Logger LOGGER = Logger.getLogger(PasswordRecoveryService.class);
 
     @Inject
     @RequestLocale
@@ -37,12 +40,14 @@ public class PasswordRecoveryService {
         if (user == null) {
             // Não revela se o e-mail existe: mesma resposta do caminho feliz, só que
             // sem gerar token nem enviar e-mail de verdade.
+            LOGGER.debugf("Recuperação de senha pedida pra email não cadastrado: %s", email);
             return Response.ok(new MessageResponse(appMessages.recovery_email_sent())).build();
         }
 
         // Check if they already requested one recently
         LocalDateTime cooldownLimit = LocalDateTime.now().minusMinutes(1);
         if (user.lastResetRequest != null && user.lastResetRequest.isAfter(cooldownLimit)) {
+            LOGGER.warnf("Recuperação de senha em cooldown: %s", email);
             return Response.status(Response.Status.BAD_REQUEST).entity(new MessageResponse(appMessages.token_limit_rate())).build();
         }
 
@@ -72,6 +77,7 @@ public class PasswordRecoveryService {
                 .data("ignoreNote", appMessages.email_recovery_ignore())
                 .render();
         emailService.send(email, body, subject);
+        LOGGER.infof("Email de recuperação de senha enviado: %s", email);
 
         return Response.ok(new MessageResponse(appMessages.recovery_email_sent()))
                 .build();

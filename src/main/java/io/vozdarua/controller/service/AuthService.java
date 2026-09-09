@@ -9,9 +9,12 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.jwt.Claims;
+import org.jboss.logging.Logger;
 
 @ApplicationScoped
 public class AuthService {
+
+    private static final Logger LOGGER = Logger.getLogger(AuthService.class);
 
     @ConfigProperty(name = "mp.jwt.verify.issuer")
     String issuer;
@@ -21,6 +24,7 @@ public class AuthService {
         user.password = BcryptUtil.bcryptHash(user.password);
         user.role = Roles.USER;
         user.persist();
+        LOGGER.infof("Usuário cadastrado: %s", user.email);
     }
 
     public AuthResponse token(User user) {

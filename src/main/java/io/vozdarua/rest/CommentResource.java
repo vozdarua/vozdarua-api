@@ -20,6 +20,7 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.SecurityContext;
+import org.jboss.logging.Logger;
 
 import java.util.List;
 import java.util.Objects;
@@ -28,6 +29,8 @@ import java.util.Objects;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class CommentResource {
+
+    private static final Logger LOGGER = Logger.getLogger(CommentResource.class);
 
     @Inject
     @RequestLocale
@@ -67,6 +70,7 @@ public class CommentResource {
         comment.userAgent = request.getHeader("User-Agent");
 
         comment.persist();
+        LOGGER.infof("Comentário criado: issueId=%d commentId=%d", issueId, comment.id);
         return Response.status(Response.Status.CREATED).entity(comment).build();
     }
 
@@ -80,6 +84,7 @@ public class CommentResource {
             return Response.status(Response.Status.NOT_FOUND).entity(new MessageResponse(appMessages.comment_not_found())).build();
         }
         comment.delete();
+        LOGGER.infof("Comentário removido: issueId=%d commentId=%d", issueId, commentId);
         return Response.noContent().build();
     }
 }

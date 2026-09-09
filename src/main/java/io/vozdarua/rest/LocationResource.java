@@ -21,6 +21,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
+import org.jboss.logging.Logger;
 
 import jakarta.inject.Inject;
 
@@ -32,6 +33,8 @@ import java.util.Locale;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class LocationResource {
+
+    private static final Logger LOGGER = Logger.getLogger(LocationResource.class);
 
     @Inject
     @RestClient
@@ -74,6 +77,7 @@ public class LocationResource {
     @Path("/coordenate/")
     @RateLimited(limit = 20, windowSeconds = 60)
     public Response getLatLongfromAddress(@QueryParam("address") String address) {
+        LOGGER.debugf("Geocodificando endereço=%s", address);
 
         List<GeoResponse> responses = geocodingClient.getCoordinates(address, "json", "MyQuarkusApp/1.0");
 
@@ -85,7 +89,12 @@ public class LocationResource {
 
             return Response.ok(firstMatch).build();
         } else {
-            return Response.noContent().entity("No coordinates found for this address.").build();
+            LOGGER.warnf("Nenhuma coordenada encontrada para endereço=%s", address);
+            // 204 (noContent) proíbe corpo na resposta por spec HTTP - a entity() abaixo nunca
+            // chegava ao cliente. NOT_FOUND com MessageResponse é o padrão usado no resto da classe.
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(new MessageResponse("Nenhuma coordenada encontrada para este endereço."))
+                    .build();
         }
 
     }
@@ -102,6 +111,7 @@ public class LocationResource {
             return Response.status(Response.Status.BAD_REQUEST)
                 .entity(new MessageResponse(appMessages.coordinates_required())).build();
         }
+        LOGGER.debugf("Buscando cidades próximas de lat=%s lng=%s", lat, lng);
 
         // Locale.US is mandatory here: quarkus.default-locale=pt_BR would render -23.22 as
         // -23,22, silently corrupting the "circle:lng,lat,radius" filter Geoapify expects.
@@ -113,6 +123,10 @@ public class LocationResource {
             .map(f -> toNearbyCityDTO(f, lat, lng))
             .sorted(Comparator.comparingLong(NearbyCityDTO::distanceKm))
             .toList();
+
+        // Log do tamanho, não da lista inteira: é o dado que faltava pra saber se o Geoapify
+        // devolveu vazio (chave/filtro/cobertura) vs. a chamada nem ter acontecido.
+        LOGGER.infof("Cidades próximas encontradas: %d (lat=%s lng=%s)", nearby.size(), lat, lng);
 
         return Response.ok(nearby).build();
     }

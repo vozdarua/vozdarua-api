@@ -26,6 +26,7 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.SecurityContext;
+import org.jboss.logging.Logger;
 
 import java.util.List;
 import java.util.Objects;
@@ -34,6 +35,8 @@ import java.util.Objects;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class UserResource {
+
+    private static final Logger LOGGER = Logger.getLogger(UserResource.class);
 
     @Inject
     AuthService accountService;
@@ -78,6 +81,7 @@ public class UserResource {
         user.password = BcryptUtil.bcryptHash(updatedUser.password);
 
         user.persist();
+        LOGGER.infof("Usuário atualizado: id=%d email=%s", id, user.email);
         return Response.status(Response.Status.CREATED).entity(UserDTO.toUserDTO(user, Issue.count("reporter.email", user.email))).build();
 
     }
@@ -136,6 +140,7 @@ public class UserResource {
 
         Comment.delete("issue.id", id);
         issue.delete();
+        LOGGER.infof("Issue removida pelo autor: id=%d email=%s", id, email);
         return Response.noContent().build();
     }
 
@@ -158,6 +163,7 @@ public class UserResource {
         }
 
         user.delete();
+        LOGGER.infof("Usuário removido: id=%d email=%s", id, user.email);
         return  Response.noContent().build();
     }
 

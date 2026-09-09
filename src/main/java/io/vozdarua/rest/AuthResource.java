@@ -16,6 +16,7 @@ import jakarta.transaction.Transactional;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.jboss.logging.Logger;
 
 import java.util.Objects;
 
@@ -23,6 +24,8 @@ import java.util.Objects;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class AuthResource {
+
+    private static final Logger LOGGER = Logger.getLogger(AuthResource.class);
 
     @Inject
     AuthService accountService;
@@ -47,9 +50,11 @@ public class AuthResource {
 
         User user = User.find("email", request.email()).firstResult();
         if (Objects.nonNull(user) && BcryptUtil.matches(request.password(), user.password)) {
+            LOGGER.debugf("Login bem-sucedido: %s", request.email());
             return Response.ok(accountService.token(user)).build();
         }
 
+        LOGGER.warnf("Login falhou: %s", request.email());
         return Response.status(Response.Status.UNAUTHORIZED).build();
     }
 
@@ -62,6 +67,7 @@ public class AuthResource {
         PasswordResetToken token = PasswordResetToken.find("token", tokenValue).firstResult();
 
         if (token == null || token.isExpired()) {
+            LOGGER.warnf("Reset de senha rejeitado: token inválido ou expirado");
             return Response.status(Response.Status.BAD_REQUEST).entity(new MessageResponse(appMessages.expired_token())).build();
         }
 
@@ -71,6 +77,7 @@ public class AuthResource {
 
         token.delete();
 
+        LOGGER.infof("Senha redefinida: %s", user.email);
         return Response.status(Response.Status.CREATED).entity(accountService.token(user)).build();
     }
 
